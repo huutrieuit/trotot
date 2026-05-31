@@ -36,7 +36,7 @@ export default async function TaiKhoanPage({ params }: Props) {
   ]);
 
   const savedListings = (savedRows ?? []).map((r) => {
-    const l = r.listings as Record<string, unknown> | null;
+    const l = r.listings as unknown as Record<string, unknown> | null;
     return {
       listingId: r.listing_id as string,
       title: (l?.title as string) ?? "",
@@ -51,7 +51,7 @@ export default async function TaiKhoanPage({ params }: Props) {
   const hasReferredBy = !!profileFull?.referred_by;
 
   const viewedListings = (viewedRows ?? []).map((r) => {
-    const l = r.listings as Record<string, unknown> | null;
+    const l = r.listings as unknown as Record<string, unknown> | null;
     return {
       listingId: r.listing_id as string,
       title: (l?.title as string) ?? "",
