@@ -68,7 +68,7 @@ export default function TimPhongPage({ params }: Props) {
   }, [citySlug]);
 
   const results = useMemo(() => {
-    let list = allListings;
+    let list = [...allListings];
 
     if (query) {
       const q = query.toLowerCase();
@@ -97,7 +97,7 @@ export default function TimPhongPage({ params }: Props) {
     }
 
     return list;
-  }, [query, filters, sort, citySlug]);
+  }, [query, filters, sort, citySlug, allListings]);
 
   const activeFilterCount = [
     filters.district,
