@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Check, Zap, Phone, ArrowRight, ShieldCheck } from "lucide-react";
+import { Check, Zap, Phone, ArrowRight, ShieldCheck, ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 
 const PACKAGES = [
@@ -19,6 +19,11 @@ export default async function GiaCaPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 pb-24">
+      <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 mb-6">
+        <ArrowLeft size={15} />
+        Trang chủ
+      </Link>
+
       {/* Header */}
       <div className="text-center mb-10">
         <div className="inline-flex items-center gap-2 bg-orange-50 text-orange-600 text-sm font-semibold px-4 py-1.5 rounded-full mb-4">
