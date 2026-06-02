@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, use, useRef } from "react";
+import { useState, use, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { notFound } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 import {
   ChevronLeft, ChevronRight, Home, Building2, House, Hotel,
   Check, Upload, X, ImagePlus, Loader2, CheckCircle2,
@@ -152,6 +152,15 @@ export default function DangTinPage({ params }: Props) {
   const { city: citySlug } = use(params);
   const city = getCityConfig(citySlug);
   if (!city || !city.available) notFound();
+
+  const router = useRouter();
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) router.replace(`/dang-nhap?redirect=/${citySlug}/dang-tin`);
+    });
+  }, [citySlug, router]);
 
   const [step, setStep] = useState(1);
   const [form, setForm] = useState<FormData>(INITIAL);
