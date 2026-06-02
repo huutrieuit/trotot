@@ -39,7 +39,7 @@ interface Props {
 
 export default function ListingCard({ listing, citySlug, className }: Props) {
   const city = citySlug ?? listing.city;
-  const coverImage = listing.images[0]?.url ?? null;
+  const coverImage = listing.images?.[0]?.url ?? null;
 
   const ageMs = Date.now() - new Date(listing.created_at).getTime();
   const isNew = ageMs < 7 * 24 * 60 * 60 * 1000;
