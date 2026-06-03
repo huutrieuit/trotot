@@ -61,7 +61,14 @@ export default function TimPhongClient({ citySlug, city }: Props) {
       .eq("city", citySlug)
       .eq("status", "active")
       .then(({ data }) => {
-        if (data) setAllListings(data as unknown as Listing[]);
+        if (!data) return;
+        const mapped = data.map((row: Record<string, unknown>) => {
+          const rawImages = ((row.listing_images as Record<string, unknown>[]) ?? [])
+            .sort((a, b) => (a.order as number) - (b.order as number))
+            .map((img) => ({ id: img.id, listing_id: img.listing_id, url: img.url, order: img.order }));
+          return { ...row, images: rawImages };
+        });
+        setAllListings(mapped as unknown as Listing[]);
       });
   }, [citySlug]);
 
