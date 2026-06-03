@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { MapPin, Maximize2, Wifi, AirVent, Car, ShieldCheck, BadgeCheck, UserCheck, Eye, Clock } from "lucide-react";
+import { MapPin, Maximize2, Wifi, AirVent, Car, ShieldCheck, BadgeCheck, UserCheck, Eye, Clock, ImageOff } from "lucide-react";
 import { Listing, ListingSource } from "@/types";
 import { cn, formatPrice, formatArea, timeAgo } from "@/lib/utils";
 
@@ -64,8 +64,11 @@ export default function ListingCard({ listing, citySlug, className }: Props) {
             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-            <MapPin size={32} className="text-gray-400" />
+          <div className="absolute inset-0 bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 flex flex-col items-center justify-center gap-2">
+            <div className="w-14 h-14 rounded-2xl bg-white/70 backdrop-blur-sm flex items-center justify-center shadow-sm">
+              <ImageOff size={24} className="text-gray-400" />
+            </div>
+            <span className="text-xs text-gray-400 font-medium">Chưa có ảnh</span>
           </div>
         )}
 
