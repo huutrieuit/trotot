@@ -31,11 +31,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               line.style.cssText='background:'+color+';color:#fff;padding:2px 6px;margin-top:2px;border-radius:3px;word-break:break-all;';
               line.textContent = msg;
               el.appendChild(line);
-              setTimeout(function(){ line.remove(); }, 6000);
+              setTimeout(function(){ line.remove(); }, 10000);
             };
-            window.addEventListener('error', function(e){ log('JS ERROR: '+e.message+' @ '+e.filename+':'+e.lineno, '#b00'); });
-            window.addEventListener('unhandledrejection', function(e){ log('PROMISE ERROR: '+e.reason, '#900'); });
-            document.addEventListener('click', function(e){ log('CLICK: '+e.target.tagName+' #'+e.target.id+' .'+e.target.className.toString().split(' ')[0], '#007'); }, true);
+            window.addEventListener('error', function(e){ log('JS ERROR: '+e.message+' ('+e.filename.split('/').pop()+':'+e.lineno+')', '#b00'); });
+            window.addEventListener('unhandledrejection', function(e){ log('PROMISE ERR: '+(e.reason && e.reason.message ? e.reason.message : e.reason), '#900'); });
+            document.addEventListener('click', function(e){ log('CLICK: '+e.target.tagName+'.'+e.target.className.toString().split(' ')[0], '#007'); }, true);
+            window.addEventListener('load', function() {
+              var ns = Array.from(document.scripts).filter(function(s){ return s.src.indexOf('/_next/')>-1; });
+              log('Next.js scripts in DOM: '+ns.length, ns.length>0?'#555':'#b00');
+              setTimeout(function(){
+                var btns = document.querySelectorAll('button');
+                var hasReact = false;
+                btns.forEach(function(n){ if(Object.keys(n).some(function(k){return k.startsWith('__react');})){hasReact=true;} });
+                log('React fiber on buttons: '+(hasReact?'YES - React OK':'NO - React NOT hydrated'), hasReact?'green':'#b00');
+              }, 2000);
+            });
           })();
         ` }} />
       </body>
