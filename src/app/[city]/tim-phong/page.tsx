@@ -124,9 +124,14 @@ export default function TimPhongPage({ params }: Props) {
           {query && <button onClick={() => setQuery("")} className="text-gray-400"><X size={16} /></button>}
         </div>
 
+        {/* DEBUG: always visible, no md:hidden */}
         <button
-          onClick={() => setFilterSheetOpen(true)}
-          className="md:hidden relative flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700"
+          onClick={() => {
+            console.log("[DEBUG] Lọc clicked, filterSheetOpen:", filterSheetOpen);
+            setFilterSheetOpen(true);
+            console.log("[DEBUG] setFilterSheetOpen(true) called");
+          }}
+          className="relative flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700"
         >
           <SlidersHorizontal size={16} />
           Lọc
@@ -250,6 +255,11 @@ export default function TimPhongPage({ params }: Props) {
             </div>
           )}
         </div>
+      </div>
+
+      {/* DEBUG */}
+      <div style={{ position: "fixed", top: 8, right: 8, background: "red", color: "white", padding: "4px 8px", fontSize: 12, zIndex: 99999, borderRadius: 4, pointerEvents: "none" }}>
+        filterOpen={String(filterSheetOpen)}
       </div>
 
       {/* Mobile filter bottom sheet – rendered via portal to avoid stacking-context issues */}
