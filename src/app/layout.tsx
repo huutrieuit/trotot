@@ -33,7 +33,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               el.appendChild(line);
               setTimeout(function(){ line.remove(); }, 10000);
             };
-            window.addEventListener('error', function(e){ log('JS ERROR: '+e.message+' ('+e.filename.split('/').pop()+':'+e.lineno+')', '#b00'); });
+            window.addEventListener('error', function(e){ log('ERR: '+e.message+' | FILE: '+e.filename.replace(/.*\/_next\//,'_next/')+' L'+e.lineno, '#b00'); });
+            log('UA: '+navigator.userAgent.substring(0,120), '#444');
             window.addEventListener('unhandledrejection', function(e){ log('PROMISE ERR: '+(e.reason && e.reason.message ? e.reason.message : e.reason), '#900'); });
             document.addEventListener('click', function(e){ log('CLICK: '+e.target.tagName+'.'+e.target.className.toString().split(' ')[0], '#007'); }, true);
             window.addEventListener('load', function() {
