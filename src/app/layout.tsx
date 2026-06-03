@@ -21,6 +21,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full flex flex-col bg-gray-50">
         {children}
         <RefApplier />
+        {/* DEBUG – xóa sau khi fix xong */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function() {
+            var log = function(msg, color) {
+              var el = document.getElementById('_dbg');
+              if (!el) { el = document.createElement('div'); el.id='_dbg'; el.style.cssText='position:fixed;bottom:70px;left:4px;right:4px;z-index:99999;font-size:11px;pointer-events:none;'; document.body.appendChild(el); }
+              var line = document.createElement('div');
+              line.style.cssText='background:'+color+';color:#fff;padding:2px 6px;margin-top:2px;border-radius:3px;word-break:break-all;';
+              line.textContent = msg;
+              el.appendChild(line);
+              setTimeout(function(){ line.remove(); }, 6000);
+            };
+            window.addEventListener('error', function(e){ log('JS ERROR: '+e.message+' @ '+e.filename+':'+e.lineno, '#b00'); });
+            window.addEventListener('unhandledrejection', function(e){ log('PROMISE ERROR: '+e.reason, '#900'); });
+            document.addEventListener('click', function(e){ log('CLICK: '+e.target.tagName+' #'+e.target.id+' .'+e.target.className.toString().split(' ')[0], '#007'); }, true);
+          })();
+        ` }} />
       </body>
     </html>
   );
