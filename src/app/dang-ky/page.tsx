@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Eye, EyeOff, Home, Building2, Loader2, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
+import { InAppBrowserWarning, useInAppBrowser } from "@/components/InAppBrowserWarning";
 
 type Role = "tenant" | "landlord";
 
@@ -19,6 +20,7 @@ export default function DangKyPage() {
   const [form, setForm] = useState({ email: "", password: "", confirm: "", fullName: "" });
   const [error, setError] = useState("");
   const [pendingRef, setPendingRef] = useState<string | null>(null);
+  const inAppBrowser = useInAppBrowser();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -58,6 +60,7 @@ export default function DangKyPage() {
   };
 
   const handleGoogle = async () => {
+    if (inAppBrowser) return;
     const supabase = createClient();
     await supabase.auth.signInWithOAuth({
       provider: "google",
@@ -111,10 +114,14 @@ export default function DangKyPage() {
             <p className="text-sm text-gray-500 mt-1">Miễn phí – không cần thẻ tín dụng</p>
           </div>
 
+          {/* In-app browser warning */}
+          <InAppBrowserWarning />
+
           {/* Google OAuth */}
           <button
             onClick={handleGoogle}
-            className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 rounded-xl py-3 text-sm font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-all shadow-sm mb-4"
+            disabled={inAppBrowser}
+            className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 rounded-xl py-3 text-sm font-medium text-gray-700 hover:border-gray-300 hover:bg-gray-50 transition-all shadow-sm mb-4 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
