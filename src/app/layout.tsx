@@ -21,34 +21,27 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full flex flex-col bg-gray-50">
         {children}
         <RefApplier />
-        {/* DEBUG – xóa sau khi fix xong */}
-        <script dangerouslySetInnerHTML={{ __html: `
-          (function() {
-            var log = function(msg, color) {
-              var el = document.getElementById('_dbg');
-              if (!el) { el = document.createElement('div'); el.id='_dbg'; el.style.cssText='position:fixed;bottom:70px;left:4px;right:4px;z-index:99999;font-size:11px;pointer-events:none;'; document.body.appendChild(el); }
-              var line = document.createElement('div');
-              line.style.cssText='background:'+color+';color:#fff;padding:2px 6px;margin-top:2px;border-radius:3px;word-break:break-all;';
-              line.textContent = msg;
-              el.appendChild(line);
-              setTimeout(function(){ line.remove(); }, 10000);
-            };
-            window.addEventListener('error', function(e){ log('ERR: '+e.message+' | FILE: '+e.filename.replace(/.*\/_next\//,'_next/')+' L'+e.lineno, '#b00'); });
-            log('UA: '+navigator.userAgent.substring(0,120), '#444');
-            window.addEventListener('unhandledrejection', function(e){ log('PROMISE ERR: '+(e.reason && e.reason.message ? e.reason.message : e.reason), '#900'); });
-            document.addEventListener('click', function(e){ log('CLICK: '+e.target.tagName+'.'+e.target.className.toString().split(' ')[0], '#007'); }, true);
-            window.addEventListener('load', function() {
-              var ns = Array.from(document.scripts).filter(function(s){ return s.src.indexOf('/_next/')>-1; });
-              log('Next.js scripts in DOM: '+ns.length, ns.length>0?'#555':'#b00');
-              setTimeout(function(){
-                var btns = document.querySelectorAll('button');
-                var hasReact = false;
-                btns.forEach(function(n){ if(Object.keys(n).some(function(k){return k.startsWith('__react');})){hasReact=true;} });
-                log('React fiber on buttons: '+(hasReact?'YES - React OK':'NO - React NOT hydrated'), hasReact?'green':'#b00');
-              }, 2000);
-            });
-          })();
-        ` }} />
+        {/* DEBUG */}
+        <script dangerouslySetInnerHTML={{ __html: [
+          "(function(){",
+          "var b=document.createElement('div');",
+          "b.id='_dbg';",
+          "b.style.cssText='position:fixed;bottom:70px;left:4px;right:4px;z-index:99999;font-size:11px;pointer-events:none;';",
+          "document.body.appendChild(b);",
+          "function log(m,c){var d=document.createElement('div');d.style.cssText='background:'+c+';color:#fff;padding:3px 6px;margin-top:2px;border-radius:3px;word-break:break-all;';d.textContent=m;b.appendChild(d);}",
+          "log('UA:'+navigator.userAgent.substring(0,100),'#333');",
+          "window.onerror=function(m,f,l){log('ERR:'+m+' '+f.split('/').pop()+':'+l,'#c00');return false;};",
+          "document.addEventListener('click',function(e){log('CLICK:'+e.target.tagName,'#06c');},true);",
+          "window.addEventListener('load',function(){",
+          "var sc=document.scripts.length;",
+          "log('scripts:'+sc,'#555');",
+          "setTimeout(function(){",
+          "var ok=false;",
+          "document.querySelectorAll('button').forEach(function(n){if(Object.keys(n).some(function(k){return k.indexOf('react')>-1;})){ok=true;}});",
+          "log('react-hydrated:'+ok,ok?'#060':'#c00');",
+          "},3000);});",
+          "})();"
+        ].join('') }} />
       </body>
     </html>
   );
