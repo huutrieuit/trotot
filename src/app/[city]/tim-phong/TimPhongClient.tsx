@@ -26,6 +26,16 @@ interface Props {
   city: CityConfig;
 }
 
+function dbgLog(msg: string, color: string) {
+  const el = document.getElementById("_dbg");
+  if (!el) return;
+  const line = document.createElement("div");
+  line.style.cssText = `background:${color};color:#fff;padding:2px 6px;margin-top:2px;border-radius:3px;`;
+  line.textContent = msg;
+  el.appendChild(line);
+  setTimeout(() => line.remove(), 6000);
+}
+
 export default function TimPhongClient({ citySlug, city }: Props) {
   const [allListings, setAllListings] = useState<Listing[]>([]);
   const [query, setQuery] = useState("");
@@ -35,6 +45,9 @@ export default function TimPhongClient({ citySlug, city }: Props) {
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [watchSaving, setWatchSaving] = useState(false);
   const [watchDone, setWatchDone] = useState(false);
+
+  // DEBUG: green = React mounted (useEffect ran)
+  useEffect(() => { dbgLog("✓ React mounted (useEffect)", "green"); }, []);
 
   const hasActiveFilters = !!(filters.district || filters.room_type || filters.price_min != null || filters.price_max != null || query);
 
@@ -120,7 +133,7 @@ export default function TimPhongClient({ citySlug, city }: Props) {
         </div>
 
         <button
-          onClick={() => setFilterSheetOpen(true)}
+          onClick={() => { dbgLog("✓ React onClick fired!", "purple"); setFilterSheetOpen(true); }}
           className="md:hidden relative flex items-center gap-1.5 bg-white border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700"
         >
           <SlidersHorizontal size={16} />
