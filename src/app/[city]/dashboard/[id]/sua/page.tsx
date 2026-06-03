@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, use, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -28,12 +28,8 @@ const AMENITY_LIST: { key: keyof Amenities; icon: React.ElementType; label: stri
 
 interface ExistingImage { id: string; url: string; order: number }
 
-interface Props {
-  params: Promise<{ city: string; id: string }>;
-}
-
-export default function SuaTinPage({ params }: Props) {
-  const { city: citySlug, id } = use(params);
+export default function SuaTinPage() {
+  const { city: citySlug, id } = useParams() as { city: string; id: string };
   const city = getCityConfig(citySlug);
   if (!city || !city.available) notFound();
 

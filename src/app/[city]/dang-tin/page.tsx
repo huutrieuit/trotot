@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, use, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { notFound, useRouter } from "next/navigation";
+import { notFound, useRouter, useParams } from "next/navigation";
 import {
   ChevronLeft, ChevronRight, Home, Building2, House, Hotel,
   Check, Upload, X, ImagePlus, Loader2, CheckCircle2,
@@ -146,10 +146,8 @@ function StepBar({ current }: { current: number }) {
 }
 
 /* ─── Main page ─── */
-interface Props { params: Promise<{ city: string }> }
-
-export default function DangTinPage({ params }: Props) {
-  const { city: citySlug } = use(params);
+export default function DangTinPage() {
+  const { city: citySlug } = useParams() as { city: string };
   const city = getCityConfig(citySlug);
   if (!city || !city.available) notFound();
 

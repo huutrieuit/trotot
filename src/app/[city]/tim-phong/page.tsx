@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useMemo, use, useEffect } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import { Search, SlidersHorizontal, X, ChevronDown, LayoutGrid, Map, Bell, BellOff } from "lucide-react";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import { getCityConfig } from "@/config/cities";
 import { SearchFilters, SortOption, Listing } from "@/types";
 import { createClient } from "@/lib/supabase/client";
@@ -22,12 +22,8 @@ const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "popular", label: "Phổ biến nhất" },
 ];
 
-interface Props {
-  params: Promise<{ city: string }>;
-}
-
-export default function TimPhongPage({ params }: Props) {
-  const { city: citySlug } = use(params);
+export default function TimPhongPage() {
+  const { city: citySlug } = useParams() as { city: string };
   const city = getCityConfig(citySlug);
   if (!city || !city.available) notFound();
 
