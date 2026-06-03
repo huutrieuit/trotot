@@ -11,9 +11,9 @@ import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import ListingCard from "@/components/listings/ListingCard";
 import FilterSidebar from "@/components/listings/FilterSidebar";
+import { saveSearch } from "@/app/actions/search";
 
 const ListingsMap = dynamic(() => import("@/components/map/ListingsMap"), { ssr: false });
-import { saveSearch } from "@/app/actions/search";
 
 const SORT_OPTIONS: { value: SortOption; label: string }[] = [
   { value: "newest", label: "Mới nhất" },
@@ -31,6 +31,7 @@ export default function TimPhongPage({ params }: Props) {
   const city = getCityConfig(citySlug);
   if (!city || !city.available) notFound();
 
+  const [mounted, setMounted] = useState(false);
   const [allListings, setAllListings] = useState<Listing[]>([]);
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<SearchFilters>({});
@@ -39,6 +40,8 @@ export default function TimPhongPage({ params }: Props) {
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
   const [watchSaving, setWatchSaving] = useState(false);
   const [watchDone, setWatchDone] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const hasActiveFilters = !!(filters.district || filters.room_type || filters.price_min != null || filters.price_max != null || query);
 
@@ -259,7 +262,7 @@ export default function TimPhongPage({ params }: Props) {
 
       {/* DEBUG */}
       <div style={{ position: "fixed", top: 8, right: 8, background: "red", color: "white", padding: "4px 8px", fontSize: 12, zIndex: 99999, borderRadius: 4, pointerEvents: "none" }}>
-        filterOpen={String(filterSheetOpen)}
+        hydrated={String(mounted)} | filterOpen={String(filterSheetOpen)}
       </div>
 
       {/* Mobile filter bottom sheet – rendered via portal to avoid stacking-context issues */}
