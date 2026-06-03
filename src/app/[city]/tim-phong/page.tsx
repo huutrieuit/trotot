@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, use, useEffect } from "react";
+import { createPortal } from "react-dom";
 import dynamic from "next/dynamic";
 import { Search, SlidersHorizontal, X, ChevronDown, LayoutGrid, Map, Bell, BellOff } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -251,11 +252,11 @@ export default function TimPhongPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Mobile filter bottom sheet */}
-      {filterSheetOpen && (
+      {/* Mobile filter bottom sheet – rendered via portal to avoid stacking-context issues */}
+      {filterSheetOpen && createPortal(
         <>
-          <div className="fixed inset-0 z-40 bg-black/40" onClick={() => setFilterSheetOpen(false)} />
-          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl max-h-[85vh] flex flex-col">
+          <div className="fixed inset-0 z-[9998] bg-black/40" onClick={() => setFilterSheetOpen(false)} />
+          <div className="fixed bottom-0 left-0 right-0 z-[9999] bg-white rounded-t-2xl max-h-[85vh] flex flex-col shadow-2xl">
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <span className="font-semibold text-gray-900">Bộ lọc</span>
               <button onClick={() => setFilterSheetOpen(false)} className="text-gray-400"><X size={20} /></button>
@@ -278,7 +279,8 @@ export default function TimPhongPage({ params }: Props) {
               </button>
             </div>
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );
