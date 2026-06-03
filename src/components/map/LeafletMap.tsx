@@ -60,7 +60,7 @@ export default function LeafletMap({ lat, lng, address, zoom = 16, className }: 
   return (
     <div
       ref={containerRef}
-      className={cn("w-full rounded-2xl overflow-hidden", className)}
+      className={cn("w-full rounded-2xl overflow-hidden isolate", className)}
     />
   );
 }
