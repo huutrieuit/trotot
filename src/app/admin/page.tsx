@@ -9,7 +9,9 @@ export default async function AdminPage() {
   if (!user) redirect("/dang-nhap");
 
   const { data: profile } = await supabase.from("profiles").select("role").eq("user_id", user.id).single();
-  if (profile?.role !== "admin") redirect("/");
+  const role = profile?.role;
+  if (role !== "admin" && role !== "sub_admin") redirect("/");
+  const isFullAdmin = role === "admin";
 
   const [
     { count: totalListings },
@@ -31,11 +33,11 @@ export default async function AdminPage() {
   ];
 
   const quickLinks = [
-    { href: "/admin/duyet-tin", icon: ListChecks, label: "Duyệt tin đăng", desc: `${pendingListings ?? 0} tin đang chờ`, color: "border-amber-200 hover:border-amber-400" },
-    { href: "/admin/dang-tin", icon: PlusSquare, label: "Đăng tin thay chủ nhà", desc: "Nhập tin từ FB, khảo sát,...", color: "border-blue-200 hover:border-blue-400" },
-    { href: "/admin/users", icon: Users, label: "Quản lý người dùng", desc: `${totalUsers ?? 0} tài khoản`, color: "border-purple-200 hover:border-purple-400" },
-    { href: "/admin/cai-dat", icon: Settings, label: "Cài đặt", desc: "Ngân hàng, Zalo hỗ trợ", color: "border-gray-200 hover:border-gray-400" },
-  ];
+    { href: "/admin/duyet-tin",   icon: ListChecks, label: "Duyệt tin đăng",      desc: `${pendingListings ?? 0} tin đang chờ`, color: "border-amber-200 hover:border-amber-400", adminOnly: false },
+    { href: "/admin/dang-tin",    icon: PlusSquare, label: "Đăng tin thay chủ nhà", desc: "Nhập tin từ FB, khảo sát,...",       color: "border-blue-200 hover:border-blue-400",  adminOnly: false },
+    { href: "/admin/users",       icon: Users,      label: "Quản lý người dùng",  desc: `${totalUsers ?? 0} tài khoản`,         color: "border-purple-200 hover:border-purple-400", adminOnly: true },
+    { href: "/admin/cai-dat",     icon: Settings,   label: "Cài đặt",             desc: "Ngân hàng, Zalo hỗ trợ",               color: "border-gray-200 hover:border-gray-400",  adminOnly: false },
+  ].filter((l) => !l.adminOnly || isFullAdmin);
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6">

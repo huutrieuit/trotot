@@ -1,21 +1,26 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, XCircle, Loader2, MapPin, Maximize2, Users } from "lucide-react";
-import { approveListing, rejectListing } from "@/app/actions/admin";
+import { CheckCircle2, XCircle, Trash2, Loader2, MapPin, Maximize2, Users } from "lucide-react";
+import { approveListing, rejectListing, deleteListing } from "@/app/actions/admin";
 import { formatPrice, formatArea } from "@/lib/utils";
 import type { Listing } from "@/types";
 
-export default function ApprovalCard({ listing }: { listing: Listing }) {
-  const [loading, setLoading] = useState<"approve" | "reject" | null>(null);
-  const [done, setDone] = useState<"approved" | "rejected" | null>(null);
+type Action = "approve" | "reject" | "delete";
+type Done = "approved" | "rejected" | "deleted";
 
-  const handle = async (action: "approve" | "reject") => {
+export default function ApprovalCard({ listing }: { listing: Listing }) {
+  const [loading, setLoading] = useState<Action | null>(null);
+  const [done, setDone] = useState<Done | null>(null);
+
+  const handle = async (action: Action) => {
+    if (action === "delete" && !confirm("Xóa vĩnh viễn tin này? Không thể khôi phục.")) return;
     setLoading(action);
     try {
       if (action === "approve") await approveListing(listing.id);
-      else await rejectListing(listing.id);
-      setDone(action === "approve" ? "approved" : "rejected");
+      else if (action === "reject") await rejectListing(listing.id);
+      else await deleteListing(listing.id);
+      setDone(action === "approve" ? "approved" : action === "reject" ? "rejected" : "deleted");
     } catch (e) {
       console.error(e);
       alert("Thao tác thất bại. Thử lại.");
@@ -25,16 +30,15 @@ export default function ApprovalCard({ listing }: { listing: Listing }) {
   };
 
   if (done) {
+    const cfg = {
+      approved: { bg: "bg-green-50 border-green-200", icon: <CheckCircle2 size={20} className="text-green-500 shrink-0" />, text: "Đã duyệt — tin đang hiển thị" },
+      rejected: { bg: "bg-gray-50 border-gray-200", icon: <XCircle size={20} className="text-gray-400 shrink-0" />, text: "Đã từ chối — tin bị ẩn" },
+      deleted:  { bg: "bg-red-50 border-red-200",  icon: <Trash2 size={20} className="text-red-400 shrink-0" />,  text: "Đã xóa vĩnh viễn" },
+    }[done];
     return (
-      <div className={`rounded-2xl border p-4 flex items-center gap-3 ${
-        done === "approved" ? "bg-green-50 border-green-200" : "bg-gray-50 border-gray-200"
-      }`}>
-        {done === "approved"
-          ? <CheckCircle2 size={20} className="text-green-500 shrink-0" />
-          : <XCircle size={20} className="text-gray-400 shrink-0" />}
-        <p className="text-sm font-medium text-gray-600">
-          {done === "approved" ? "Đã duyệt — tin đang hiển thị" : "Đã từ chối — tin bị ẩn"}
-        </p>
+      <div className={`rounded-2xl border p-4 flex items-center gap-3 ${cfg.bg}`}>
+        {cfg.icon}
+        <p className="text-sm font-medium text-gray-600">{cfg.text}</p>
       </div>
     );
   }
@@ -97,22 +101,30 @@ export default function ApprovalCard({ listing }: { listing: Listing }) {
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3 px-4 pb-4">
+      <div className="flex gap-2 px-4 pb-4">
         <button
           onClick={() => handle("approve")}
           disabled={!!loading}
-          className="flex-1 flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors"
+          className="flex-1 flex items-center justify-center gap-1.5 bg-green-600 hover:bg-green-700 disabled:opacity-60 text-white font-semibold py-2.5 rounded-xl text-sm transition-colors"
         >
-          {loading === "approve" ? <Loader2 size={15} className="animate-spin" /> : <CheckCircle2 size={15} />}
-          Duyệt tin
+          {loading === "approve" ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+          Duyệt
         </button>
         <button
           onClick={() => handle("reject")}
           disabled={!!loading}
-          className="flex-1 flex items-center justify-center gap-2 border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-60 font-semibold py-2.5 rounded-xl text-sm transition-colors"
+          className="flex-1 flex items-center justify-center gap-1.5 border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-60 font-semibold py-2.5 rounded-xl text-sm transition-colors"
         >
-          {loading === "reject" ? <Loader2 size={15} className="animate-spin" /> : <XCircle size={15} />}
+          {loading === "reject" ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
           Từ chối
+        </button>
+        <button
+          onClick={() => handle("delete")}
+          disabled={!!loading}
+          className="flex items-center justify-center gap-1.5 border border-red-200 text-red-600 hover:bg-red-50 disabled:opacity-60 font-semibold py-2.5 px-3 rounded-xl text-sm transition-colors"
+          title="Xóa vĩnh viễn"
+        >
+          {loading === "delete" ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
         </button>
       </div>
     </div>

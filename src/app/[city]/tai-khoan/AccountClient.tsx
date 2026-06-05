@@ -6,7 +6,7 @@ import Link from "next/link";
 import {
   ChevronLeft, Camera, KeyRound, LogOut, Check,
   Loader2, Eye, EyeOff, AlertCircle, User, CreditCard, Zap, ShieldCheck,
-  Heart, MapPin, Trash2, Phone, Gift, Copy, CheckCheck,
+  Heart, MapPin, Trash2, Phone, Gift, Copy, CheckCheck, LayoutDashboard,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { toggleSaveListing } from "@/app/actions/save";
@@ -552,6 +552,27 @@ export default function AccountClient({ citySlug, userId, email, fullName, avata
           </div>
         )}
       </div>
+
+      {/* ── Admin panel link (chỉ hiển thị với admin/sub_admin) ── */}
+      {(role === "admin" || role === "sub_admin") && (
+        <div className="mb-4">
+          <Link
+            href="/admin"
+            className="flex items-center gap-3 bg-gray-900 hover:bg-gray-800 text-white rounded-2xl p-4 transition-colors"
+          >
+            <div className="w-9 h-9 bg-white/10 rounded-xl flex items-center justify-center shrink-0">
+              <LayoutDashboard size={18} className="text-orange-400" />
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold text-sm">
+                {role === "admin" ? "Trang quản trị Admin" : "Trang quản trị (Sub Admin)"}
+              </p>
+              <p className="text-xs text-gray-400 mt-0.5">Duyệt tin, quản lý nội dung</p>
+            </div>
+            <ShieldCheck size={16} className="text-orange-400 shrink-0" />
+          </Link>
+        </div>
+      )}
 
       {/* ── Sign out ── */}
       <div className="bg-white rounded-2xl border border-gray-100 p-5">

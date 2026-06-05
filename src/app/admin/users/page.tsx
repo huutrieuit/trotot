@@ -5,9 +5,10 @@ import RoleSelect from "./RoleSelect";
 import CreditInput from "./CreditInput";
 
 const ROLE_BADGE: Record<string, { label: string; className: string; icon: React.ElementType }> = {
-  admin:    { label: "Admin",       className: "bg-red-100 text-red-700",    icon: ShieldCheck },
-  landlord: { label: "Chủ nhà",    className: "bg-orange-100 text-orange-700", icon: Building2 },
-  tenant:   { label: "Người thuê", className: "bg-blue-100 text-blue-700",  icon: Home },
+  admin:     { label: "Admin",      className: "bg-red-100 text-red-700",       icon: ShieldCheck },
+  sub_admin: { label: "Sub Admin",  className: "bg-orange-100 text-orange-700", icon: ShieldCheck },
+  landlord:  { label: "Chủ nhà",   className: "bg-amber-100 text-amber-700",   icon: Building2 },
+  tenant:    { label: "Người thuê", className: "bg-blue-100 text-blue-700",    icon: Home },
 };
 
 export default async function AdminUsersPage() {

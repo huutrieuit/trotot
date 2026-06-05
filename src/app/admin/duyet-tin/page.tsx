@@ -28,7 +28,7 @@ export default async function DuyetTinPage() {
   if (!user) redirect("/dang-nhap");
 
   const { data: profile } = await supabase.from("profiles").select("role").eq("user_id", user.id).single();
-  if (profile?.role !== "admin") redirect("/");
+  if (profile?.role !== "admin" && profile?.role !== "sub_admin") redirect("/");
 
   const { data } = await supabase
     .from("listings")

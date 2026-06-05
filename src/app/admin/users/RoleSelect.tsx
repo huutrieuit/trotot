@@ -5,12 +5,13 @@ import { Loader2 } from "lucide-react";
 import { setUserRole } from "@/app/actions/admin";
 
 const ROLES = [
-  { value: "tenant", label: "Người thuê" },
-  { value: "landlord", label: "Chủ nhà" },
-  { value: "admin", label: "Admin" },
+  { value: "tenant",    label: "Người thuê" },
+  { value: "landlord",  label: "Chủ nhà" },
+  { value: "sub_admin", label: "Sub Admin" },
+  { value: "admin",     label: "Admin" },
 ] as const;
 
-type Role = "tenant" | "landlord" | "admin";
+type Role = "tenant" | "landlord" | "admin" | "sub_admin";
 
 export default function RoleSelect({ userId, currentRole }: { userId: string; currentRole: Role }) {
   const [role, setRole] = useState<Role>(currentRole);

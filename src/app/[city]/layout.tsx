@@ -18,13 +18,15 @@ export default async function CityLayout({ children, params }: Props) {
   const { data: { user } } = await supabase.auth.getUser();
 
   let credits: number | null = null;
+  let role: string | null = null;
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("credits")
+      .select("credits, role")
       .eq("user_id", user.id)
       .single();
     credits = profile?.credits ?? null;
+    role = profile?.role ?? null;
   }
 
   const authUser = user
@@ -32,6 +34,7 @@ export default async function CityLayout({ children, params }: Props) {
         name: user.user_metadata?.full_name ?? user.email ?? "Tài khoản",
         avatar_url: user.user_metadata?.avatar_url ?? null,
         credits,
+        role,
       }
     : null;
 

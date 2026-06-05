@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Menu, X, Search, LogOut, User, ChevronDown, LayoutList, CreditCard } from "lucide-react";
+import { Menu, X, Search, LogOut, User, ChevronDown, LayoutList, CreditCard, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 
@@ -11,6 +11,7 @@ interface AuthUser {
   name: string;
   avatar_url: string | null;
   credits: number | null;
+  role: string | null;
 }
 
 interface Props {
@@ -102,6 +103,16 @@ export default function Header({ citySlug, cityName, user }: Props) {
                         <CreditCard size={15} />
                         Mua thêm credit
                       </Link>
+                      {(user.role === "admin" || user.role === "sub_admin") && (
+                        <>
+                          <div className="border-t border-gray-100 my-1" />
+                          <Link href="/admin" onClick={() => setUserMenuOpen(false)}
+                            className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-900 font-semibold hover:bg-gray-900 hover:text-white rounded-lg mx-1 transition-colors">
+                            <ShieldCheck size={15} className="text-orange-400" />
+                            Trang quản trị
+                          </Link>
+                        </>
+                      )}
                       <div className="border-t border-gray-100 my-1" />
                       <button onClick={handleLogout}
                         className="flex items-center gap-2.5 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50">
@@ -193,6 +204,14 @@ export default function Header({ citySlug, cityName, user }: Props) {
               {item.label}
             </Link>
           ))}
+
+          {user && (user.role === "admin" || user.role === "sub_admin") && (
+            <Link href="/admin" onClick={() => setDrawerOpen(false)}
+              className="px-3 py-3 rounded-lg text-gray-900 bg-gray-900 text-white hover:bg-gray-800 font-semibold transition-colors flex items-center gap-2">
+              <ShieldCheck size={16} className="text-orange-400" />
+              Trang quản trị
+            </Link>
+          )}
 
           {user && (
             <button onClick={handleLogout}

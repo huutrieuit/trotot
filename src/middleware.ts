@@ -63,8 +63,15 @@ export async function middleware(request: NextRequest) {
       .select("role")
       .eq("user_id", session.user.id)
       .single();
-    if (profile?.role !== "admin") {
-      return NextResponse.redirect(new URL("/", request.url));
+    const role = profile?.role;
+    // /admin/users chỉ dành cho full admin
+    if (pathname.startsWith("/admin/users")) {
+      if (role !== "admin") return NextResponse.redirect(new URL("/", request.url));
+    } else {
+      // Còn lại: admin hoặc sub_admin đều được vào
+      if (role !== "admin" && role !== "sub_admin") {
+        return NextResponse.redirect(new URL("/", request.url));
+      }
     }
   }
 
