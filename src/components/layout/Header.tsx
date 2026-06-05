@@ -51,6 +51,15 @@ export default function Header({ citySlug, cityName, user }: Props) {
             <Link href={`${base}/tim-phong`} className="hover:text-blue-600 transition-colors">Tìm phòng</Link>
             <Link href={`${base}/dang-tin`} className="hover:text-blue-600 transition-colors">Đăng tin</Link>
             <Link href="/gia-ca" className="hover:text-blue-600 transition-colors">Bảng giá</Link>
+            {(user?.role === "admin" || user?.role === "sub_admin") && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-1.5 text-white bg-gray-900 hover:bg-gray-700 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+              >
+                <ShieldCheck size={13} className="text-orange-400" />
+                Admin
+              </Link>
+            )}
           </nav>
 
           {/* Desktop auth */}

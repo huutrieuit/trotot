@@ -42,7 +42,7 @@ export default async function CityLayout({ children, params }: Props) {
     <>
       <Header citySlug={city.slug} cityName={city.name} user={authUser} />
       <main className="flex-1 pb-16 md:pb-0">{children}</main>
-      <BottomNav citySlug={city.slug} />
+      <BottomNav citySlug={city.slug} role={role} />
     </>
   );
 }
