@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { UserCog, ShieldCheck, ShieldOff, PlusCircle } from "lucide-react";
+import { UserCog, ShieldCheck, ShieldOff, PlusCircle, Eye } from "lucide-react";
 import StaffActions from "./StaffActions";
 import Link from "next/link";
 
@@ -103,11 +103,20 @@ export default async function NhanVienPage() {
 
                     {/* Actions */}
                     <td className="px-4 py-3">
-                      <StaffActions
-                        userId={s.user_id}
-                        name={s.full_name || s.email || s.user_id.slice(0, 8)}
-                        blocked={s.blocked ?? false}
-                      />
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Link
+                          href={`/admin/nhan-vien/${s.user_id}`}
+                          className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                        >
+                          <Eye size={11} />
+                          Xem
+                        </Link>
+                        <StaffActions
+                          userId={s.user_id}
+                          name={s.full_name || s.email || s.user_id.slice(0, 8)}
+                          blocked={s.blocked ?? false}
+                        />
+                      </div>
                     </td>
                   </tr>
                 ))}

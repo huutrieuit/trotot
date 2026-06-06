@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { Users, ShieldCheck, Home, Building2, ShieldOff } from "lucide-react";
+import { Users, ShieldCheck, Home, Building2, ShieldOff, Eye } from "lucide-react";
 import RoleSelect from "./RoleSelect";
 import CreditInput from "./CreditInput";
 import UserActions from "./UserActions";
@@ -114,12 +114,21 @@ export default async function AdminUsersPage() {
                     </td>
 
                     <td className="px-4 py-3">
-                      <UserActions
-                        userId={u.user_id}
-                        name={u.full_name || u.email || u.user_id.slice(0, 8)}
-                        blocked={u.blocked ?? false}
-                        isSelf={isMe}
-                      />
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Link
+                          href={`/admin/users/${u.user_id}`}
+                          className="flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                        >
+                          <Eye size={11} />
+                          Xem
+                        </Link>
+                        <UserActions
+                          userId={u.user_id}
+                          name={u.full_name || u.email || u.user_id.slice(0, 8)}
+                          blocked={u.blocked ?? false}
+                          isSelf={isMe}
+                        />
+                      </div>
                     </td>
                   </tr>
                 );
