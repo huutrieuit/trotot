@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { unstable_noStore as noStore } from "next/cache";
 import { getCityConfig } from "@/config/cities";
 import { createClient } from "@/lib/supabase/server";
 import Header from "@/components/layout/Header";
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default async function CityLayout({ children, params }: Props) {
+  noStore();
   const { city: citySlug } = await params;
   const city = getCityConfig(citySlug);
   if (!city || !city.available) notFound();

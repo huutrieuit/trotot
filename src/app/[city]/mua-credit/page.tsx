@@ -38,6 +38,11 @@ export default async function MuaCreditPage({ params }: Props) {
     branch:  s.bank_branch  ?? "",
   };
   const ZALO = s.zalo ?? "";
+  const QR_URLS: Record<string, string> = {
+    starter:  s.qr_starter  ?? "",
+    standard: s.qr_standard ?? "",
+    pro:      s.qr_pro      ?? "",
+  };
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6 pb-24">
@@ -66,6 +71,7 @@ export default async function MuaCreditPage({ params }: Props) {
         userEmail={user.email ?? ""}
         bank={BANK}
         zalo={ZALO}
+        qrUrls={QR_URLS}
       />
     </div>
   );

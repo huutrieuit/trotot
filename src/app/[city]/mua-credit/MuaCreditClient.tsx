@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, CheckCircle2, MessageCircle, Phone, Send, Loader2, Zap } from "lucide-react";
+import { Check, CheckCircle2, MessageCircle, Phone, Send, Loader2, Zap, QrCode, Copy, CheckCheck } from "lucide-react";
 import { notifyCreditRequest } from "@/app/actions/notify";
 import { cn } from "@/lib/utils";
 
@@ -27,20 +27,31 @@ interface Props {
   userEmail: string;
   bank: Bank;
   zalo: string;
+  qrUrls: Record<string, string>;
 }
 
 function fmt(n: number) {
   return n.toLocaleString("vi-VN") + "đ";
 }
 
-export default function MuaCreditClient({ packages, userEmail, bank, zalo }: Props) {
+export default function MuaCreditClient({ packages, userEmail, bank, zalo, qrUrls }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
+  const [copiedAccount, setCopiedAccount] = useState(false);
+  const [copiedNote, setCopiedNote] = useState(false);
 
   const pkg = packages.find((p) => p.id === selected) ?? null;
   const emailPrefix = userEmail.split("@")[0].toUpperCase();
+  const transferNote = pkg ? `TROTOT ${emailPrefix} ${pkg.credits}` : "";
+  const qrUrl = pkg ? (qrUrls[pkg.id] ?? "") : "";
+
+  const copy = (text: string, type: "account" | "note") => {
+    navigator.clipboard.writeText(text);
+    if (type === "account") { setCopiedAccount(true); setTimeout(() => setCopiedAccount(false), 2000); }
+    else { setCopiedNote(true); setTimeout(() => setCopiedNote(false), 2000); }
+  };
 
   const handleNotify = async () => {
     if (!pkg) return;
@@ -52,11 +63,8 @@ export default function MuaCreditClient({ packages, userEmail, bank, zalo }: Pro
       amount: pkg.price,
     });
     setSending(false);
-    if (result && typeof result.error === "string") {
-      setError(result.error);
-    } else {
-      setDone(true);
-    }
+    if (result && typeof result.error === "string") setError(result.error);
+    else setDone(true);
   };
 
   if (done && pkg) {
@@ -73,7 +81,7 @@ export default function MuaCreditClient({ packages, userEmail, bank, zalo }: Pro
 
   return (
     <div className="space-y-5">
-      {/* ── Packages ── */}
+      {/* ── Chọn gói ── */}
       <div>
         <h2 className="font-semibold text-gray-900 mb-3">Chọn gói</h2>
         <div className="space-y-3">
@@ -100,7 +108,6 @@ export default function MuaCreditClient({ packages, userEmail, bank, zalo }: Pro
                     {p.badge}
                   </span>
                 )}
-                {/* Selected checkmark */}
                 {isSelected && (
                   <span className="absolute top-3 right-3 w-5 h-5 bg-orange-500 rounded-full flex items-center justify-center">
                     <Check size={12} className="text-white" strokeWidth={3} />
@@ -133,102 +140,119 @@ export default function MuaCreditClient({ packages, userEmail, bank, zalo }: Pro
         </div>
       </div>
 
-      {/* ── Payment instructions ── */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-5">
-        <h2 className="font-semibold text-gray-900 mb-4">Hướng dẫn thanh toán</h2>
-
-        {!pkg ? (
-          <div className="flex items-center gap-2 text-sm text-gray-400 bg-gray-50 rounded-xl px-4 py-3">
-            <Zap size={15} className="text-gray-300" />
-            Chọn gói bên trên để xem hướng dẫn thanh toán
+      {/* ── Thanh toán QR ── */}
+      {pkg && (
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          <div className="px-5 pt-5 pb-4 border-b border-gray-100">
+            <h2 className="font-semibold text-gray-900">Thanh toán</h2>
+            <p className="text-xs text-gray-400 mt-0.5">Quét QR hoặc chuyển khoản thủ công</p>
           </div>
-        ) : (
-          <ol className="space-y-4 text-sm text-gray-700">
-            <li className="flex gap-3">
-              <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
-              <div className="flex-1">
-                <p className="font-medium mb-2">Chuyển khoản</p>
-                <div className="bg-gray-50 rounded-xl p-3 font-mono text-xs space-y-1.5">
-                  <p><span className="text-gray-400">Ngân hàng:</span> {bank.name}</p>
-                  <p><span className="text-gray-400">Số TK:</span> <strong className="text-gray-900">{bank.account}</strong></p>
-                  <p><span className="text-gray-400">Chủ TK:</span> {bank.owner}</p>
-                  <p><span className="text-gray-400">Chi nhánh:</span> {bank.branch}</p>
-                  <div className="border-t border-gray-200 pt-1.5 mt-1.5">
-                    <p className="text-gray-400">Số tiền:</p>
-                    <p className="text-orange-500 font-bold text-sm mt-0.5">{fmt(pkg.price)}</p>
-                  </div>
-                </div>
-              </div>
-            </li>
 
-            <li className="flex gap-3">
-              <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
-              <div className="flex-1">
-                <p className="font-medium mb-2">Nội dung chuyển khoản</p>
-                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs">
-                  <p className="text-amber-800 font-mono font-bold text-sm tracking-wide">
-                    TROTOT {emailPrefix} {pkg.credits}
-                  </p>
-                  <p className="text-amber-600 mt-1.5">
-                    Ghi chính xác để admin nhận ra giao dịch của bạn.
-                  </p>
+          {/* QR section */}
+          <div className="px-5 pt-4 pb-5">
+            {qrUrl ? (
+              <div className="flex flex-col items-center mb-5">
+                <div className="w-52 h-52 rounded-2xl overflow-hidden border-2 border-orange-100 bg-white p-2 shadow-sm">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={qrUrl} alt={`QR ${pkg.name}`} className="w-full h-full object-contain" />
                 </div>
-              </div>
-            </li>
-
-            <li className="flex gap-3">
-              <span className="w-6 h-6 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
-              <div>
-                <p className="font-medium">Nhắn Zalo kèm ảnh biên lai</p>
-                <p className="text-gray-500 text-xs mt-1">
-                  Credit được cộng trong vòng <strong>15 phút</strong> (giờ hành chính).
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  Quét để thanh toán <span className="font-bold text-orange-500">{fmt(pkg.price)}</span>
                 </p>
               </div>
-            </li>
-          </ol>
-        )}
-      </div>
+            ) : (
+              <div className="flex flex-col items-center mb-5 py-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+                <QrCode size={36} className="text-gray-300 mb-2" />
+                <p className="text-xs text-gray-400">QR chưa được cấu hình</p>
+                <p className="text-xs text-gray-400">Vui lòng chuyển khoản thủ công bên dưới</p>
+              </div>
+            )}
 
-      {/* ── Contact buttons ── */}
-      <div className="space-y-2">
-        <a
-          href={`https://zalo.me/${zalo}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center gap-2 w-full bg-[#0068FF] hover:opacity-90 text-white font-semibold py-3 rounded-xl transition-opacity"
-        >
-          <MessageCircle size={18} />
-          Nhắn Zalo xác nhận thanh toán
-        </a>
-        <a
-          href={`tel:${zalo}`}
-          className="flex items-center justify-center gap-2 w-full border border-gray-200 text-gray-700 hover:border-blue-300 font-medium py-2.5 rounded-xl transition-colors text-sm"
-        >
-          <Phone size={16} />
-          Gọi hỗ trợ: {zalo}
-        </a>
-      </div>
+            {/* Bank info */}
+            <div className="bg-gray-50 rounded-xl p-4 space-y-2.5 text-sm">
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 text-xs">Ngân hàng</span>
+                <span className="font-medium text-gray-800">{bank.name}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-gray-500 text-xs">Chủ tài khoản</span>
+                <span className="font-medium text-gray-800">{bank.owner || "—"}</span>
+              </div>
+              <div className="flex items-center justify-between border-t border-gray-200 pt-2.5">
+                <span className="text-gray-500 text-xs">Số tài khoản</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-bold text-gray-900 font-mono">{bank.account || "—"}</span>
+                  {bank.account && (
+                    <button onClick={() => copy(bank.account, "account")} className="text-blue-500 hover:text-blue-700">
+                      {copiedAccount ? <CheckCheck size={13} /> : <Copy size={13} />}
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center justify-between border-t border-gray-200 pt-2.5">
+                <span className="text-gray-500 text-xs">Số tiền</span>
+                <span className="font-bold text-orange-500">{fmt(pkg.price)}</span>
+              </div>
+            </div>
 
-      {/* ── Notify admin ── */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-5">
-        <p className="font-semibold text-gray-900 mb-1">Đã chuyển khoản?</p>
-        <p className="text-xs text-gray-500 mb-4">
-          Bấm thông báo để admin nhận email và xử lý ngay — không cần đợi Zalo.
-        </p>
+            {/* Transfer note */}
+            <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div>
+                  <p className="text-xs text-amber-600 mb-1 font-medium">Nội dung chuyển khoản</p>
+                  <p className="font-mono font-bold text-sm text-amber-900 tracking-wide">{transferNote}</p>
+                </div>
+                <button onClick={() => copy(transferNote, "note")}
+                  className="shrink-0 flex items-center gap-1 text-xs text-amber-700 hover:text-amber-900 border border-amber-300 rounded-lg px-2 py-1 transition-colors">
+                  {copiedNote ? <><CheckCheck size={12} /> Đã copy</> : <><Copy size={12} /> Copy</>}
+                </button>
+              </div>
+              <p className="text-[11px] text-amber-600 mt-2">Ghi đúng nội dung để admin nhận ra giao dịch của bạn.</p>
+            </div>
+          </div>
+        </div>
+      )}
 
-        {error && (
-          <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2 mb-3">{error}</p>
-        )}
+      {/* ── Liên hệ & thông báo ── */}
+      {pkg && (
+        <div className="space-y-2">
+          <a href={`https://zalo.me/${zalo}`} target="_blank" rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 w-full bg-[#0068FF] hover:opacity-90 text-white font-semibold py-3 rounded-xl transition-opacity">
+            <MessageCircle size={18} />
+            Nhắn Zalo xác nhận thanh toán
+          </a>
+          {zalo && (
+            <a href={`tel:${zalo}`}
+              className="flex items-center justify-center gap-2 w-full border border-gray-200 text-gray-700 hover:border-blue-300 font-medium py-2.5 rounded-xl transition-colors text-sm">
+              <Phone size={16} />
+              Gọi hỗ trợ: {zalo}
+            </a>
+          )}
 
-        <button
-          onClick={handleNotify}
-          disabled={!pkg || sending}
-          className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
-        >
-          {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-          {sending ? "Đang gửi thông báo..." : pkg ? `Thông báo đã thanh toán ${fmt(pkg.price)}` : "Chọn gói để thông báo"}
-        </button>
-      </div>
+          <div className="bg-white rounded-2xl border border-gray-100 p-4 mt-1">
+            <p className="font-semibold text-gray-900 text-sm mb-0.5">Đã chuyển khoản?</p>
+            <p className="text-xs text-gray-500 mb-3">
+              Bấm thông báo để admin nhận ngay và xử lý — không cần đợi Zalo.
+            </p>
+            {error && <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2 mb-3">{error}</p>}
+            <button
+              onClick={handleNotify}
+              disabled={sending}
+              className="w-full flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-50 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+            >
+              {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+              {sending ? "Đang gửi..." : `Thông báo đã thanh toán ${fmt(pkg.price)}`}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!pkg && (
+        <div className="flex items-center gap-2 text-sm text-gray-400 bg-gray-50 rounded-xl px-4 py-4">
+          <Zap size={15} className="text-gray-300" />
+          Chọn gói bên trên để xem hướng dẫn thanh toán
+        </div>
+      )}
 
       <p className="text-xs text-center text-gray-400">
         Credit không có hạn sử dụng · Không hoàn tiền sau khi đã cộng vào tài khoản
