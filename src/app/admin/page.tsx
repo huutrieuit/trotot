@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { ListChecks, Users, LayoutDashboard, PlusSquare, TrendingUp, Clock, Settings, Zap } from "lucide-react";
+import { ListChecks, Users, LayoutDashboard, PlusSquare, TrendingUp, Clock, Settings, Zap, PhoneOff } from "lucide-react";
 
 export default async function AdminPage() {
   const supabase = await createClient();
@@ -19,24 +19,27 @@ export default async function AdminPage() {
     { count: activeListings },
     { count: totalUsers },
     { count: pendingCredits },
+    { count: pendingReports },
   ] = await Promise.all([
     supabase.from("listings").select("*", { count: "exact", head: true }),
     supabase.from("listings").select("*", { count: "exact", head: true }).eq("status", "pending"),
     supabase.from("listings").select("*", { count: "exact", head: true }).eq("status", "active"),
     supabase.from("profiles").select("*", { count: "exact", head: true }),
     supabase.from("credit_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
+    supabase.from("credit_reports").select("*", { count: "exact", head: true }).eq("status", "pending"),
   ]);
 
   const stats = [
     { label: "Tổng tin đăng",   value: totalListings ?? 0,  icon: LayoutDashboard, color: "text-blue-600",   bg: "bg-blue-50" },
     { label: "Chờ duyệt tin",   value: pendingListings ?? 0, icon: Clock,           color: "text-amber-600",  bg: "bg-amber-50",  href: "/admin/duyet-tin" },
-    { label: "Đang hiển thị",   value: activeListings ?? 0,  icon: TrendingUp,      color: "text-green-600",  bg: "bg-green-50" },
     { label: "Yêu cầu credit",  value: pendingCredits ?? 0,  icon: Zap,             color: "text-orange-600", bg: "bg-orange-50", href: "/admin/yeu-cau-credit" },
+    { label: "Báo cáo SĐT",     value: pendingReports ?? 0,  icon: PhoneOff,        color: "text-red-600",    bg: "bg-red-50",    href: "/admin/bao-cao-sdt" },
   ];
 
   const quickLinks = [
     { href: "/admin/duyet-tin",      icon: ListChecks, label: "Duyệt tin đăng",      desc: `${pendingListings ?? 0} tin đang chờ`,    color: "border-amber-200 hover:border-amber-400",  adminOnly: false },
     { href: "/admin/yeu-cau-credit", icon: Zap,        label: "Yêu cầu nạp credit",  desc: `${pendingCredits ?? 0} đang chờ duyệt`,   color: "border-orange-200 hover:border-orange-400", adminOnly: false },
+    { href: "/admin/bao-cao-sdt",    icon: PhoneOff,   label: "Báo cáo SĐT",         desc: `${pendingReports ?? 0} chờ xử lý`,        color: "border-red-200 hover:border-red-400",       adminOnly: false },
     { href: "/admin/users",          icon: Users,      label: "Quản lý người dùng",  desc: `${totalUsers ?? 0} tài khoản`,             color: "border-purple-200 hover:border-purple-400", adminOnly: true },
     { href: "/admin/cai-dat",        icon: Settings,   label: "Cài đặt",             desc: "Ngân hàng, Zalo hỗ trợ",                  color: "border-gray-200 hover:border-gray-400",    adminOnly: false },
   ].filter((l) => !l.adminOnly || isFullAdmin);

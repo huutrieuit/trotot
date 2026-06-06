@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShieldCheck, LayoutDashboard, PlusSquare, ListChecks, Users, LayoutList, Zap, UserCog } from "lucide-react";
+import { ShieldCheck, LayoutDashboard, PlusSquare, ListChecks, Users, LayoutList, Zap, UserCog, PhoneOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 
 const ALL_NAV = [
@@ -8,6 +8,7 @@ const ALL_NAV = [
   { href: "/admin/duyet-tin",      icon: ListChecks,      label: "Duyệt tin",       adminOnly: false },
   { href: "/admin/quan-ly-tin",    icon: LayoutList,      label: "Quản lý tin",     adminOnly: false },
   { href: "/admin/yeu-cau-credit", icon: Zap,             label: "Yêu cầu credit",  adminOnly: false },
+  { href: "/admin/bao-cao-sdt",    icon: PhoneOff,        label: "Báo cáo SĐT",     adminOnly: false },
   { href: "/admin/nhan-vien",      icon: UserCog,         label: "Nhân viên",       adminOnly: true  },
   { href: "/admin/users",          icon: Users,           label: "Người dùng",      adminOnly: true  },
 ];
@@ -22,11 +23,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   }
   const isFullAdmin = role === "admin";
 
-  // Đếm yêu cầu credit đang chờ duyệt
-  const { count: pendingCredits } = await supabase
-    .from("credit_requests")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "pending");
+  const [
+    { count: pendingCredits },
+    { count: pendingReports },
+  ] = await Promise.all([
+    supabase.from("credit_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
+    supabase.from("credit_reports").select("*", { count: "exact", head: true }).eq("status", "pending"),
+  ]);
 
   const nav = ALL_NAV.filter((item) => !item.adminOnly || isFullAdmin);
 
@@ -47,8 +50,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
         <nav className="flex items-center gap-1 ml-4 overflow-x-auto no-scrollbar">
           {nav.map(({ href, icon: Icon, label }) => {
-            const isCreditNav = href === "/admin/yeu-cau-credit";
-            const badge = isCreditNav && pendingCredits ? pendingCredits : null;
+            const badge =
+              (href === "/admin/yeu-cau-credit" && pendingCredits) ? pendingCredits :
+              (href === "/admin/bao-cao-sdt" && pendingReports) ? pendingReports :
+              null;
             return (
               <Link key={href} href={href}
                 className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-300 hover:bg-white/10 hover:text-white transition-colors whitespace-nowrap">
