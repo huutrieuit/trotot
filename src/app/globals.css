@@ -12,6 +12,10 @@ body {
   font-family: var(--font-be-vietnam), 'Be Vietnam Pro', Arial, Helvetica, sans-serif;
 }
 
+button, a, [role="button"], label[for], select {
+  cursor: pointer;
+}
+
 /* Bottom nav safe area for iOS */
 .safe-area-pb {
   padding-bottom: env(safe-area-inset-bottom, 0);
