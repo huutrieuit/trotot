@@ -94,7 +94,8 @@ export default async function QuanLyTinPage({ searchParams }: { searchParams: Pr
               <tbody className="divide-y divide-gray-50">
                 {listings.map((listing) => {
                   const statusCfg = STATUS_LABEL[listing.status] ?? STATUS_LABEL.hidden;
-                  const landlord = listing.profiles as { full_name: string } | null;
+                  const rawProfile = listing.profiles as { full_name: string }[] | { full_name: string } | null;
+                  const landlord = Array.isArray(rawProfile) ? (rawProfile[0] ?? null) : rawProfile;
                   return (
                     <tr key={listing.id} className="hover:bg-gray-50/50 transition-colors">
                       <td className="px-4 py-3 max-w-[220px]">
