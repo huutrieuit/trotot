@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Check, CheckCircle2, MessageCircle, Phone, Send, Loader2, Zap, QrCode, Copy, CheckCheck } from "lucide-react";
+import { Check, CheckCircle2, MessageCircle, Phone, Send, Loader2, Zap, QrCode, Copy, CheckCheck, HelpCircle } from "lucide-react";
 import { notifyCreditRequest } from "@/app/actions/notify";
 import { cn } from "@/lib/utils";
+import PaymentGuideModal from "./PaymentGuideModal";
 
 interface Package {
   id: string;
@@ -43,6 +44,7 @@ export default function MuaCreditClient({ packages, userEmail, bank, zalo, qrUrl
   const [error, setError] = useState("");
   const [copiedAccount, setCopiedAccount] = useState(false);
   const [copiedNote, setCopiedNote] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   const pkg = packages.find((p) => p.id === selected) ?? null;
   const emailPrefix = userEmail.split("@")[0].toUpperCase();
@@ -83,6 +85,25 @@ export default function MuaCreditClient({ packages, userEmail, bank, zalo, qrUrl
 
   return (
     <div className="space-y-5">
+      <PaymentGuideModal open={guideOpen} onClose={() => setGuideOpen(false)} />
+
+      {/* ── Hướng dẫn ── */}
+      <button
+        onClick={() => setGuideOpen(true)}
+        className="w-full flex items-center justify-between bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-2xl px-4 py-3 transition-colors group"
+      >
+        <div className="flex items-center gap-2.5">
+          <HelpCircle size={17} className="text-blue-500 shrink-0" />
+          <div className="text-left">
+            <p className="text-sm font-semibold text-blue-700">Hướng dẫn thanh toán</p>
+            <p className="text-xs text-blue-500">Xem từng bước chi tiết — mất 1 phút</p>
+          </div>
+        </div>
+        <span className="text-xs font-semibold text-blue-600 bg-blue-100 group-hover:bg-blue-200 px-2.5 py-1 rounded-lg transition-colors">
+          Xem ngay
+        </span>
+      </button>
+
       {/* ── Chọn gói ── */}
       <div>
         <h2 className="font-semibold text-gray-900 mb-3">Chọn gói</h2>
