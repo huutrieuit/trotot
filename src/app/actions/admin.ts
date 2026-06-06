@@ -133,8 +133,8 @@ export async function deleteUser(userId: string): Promise<{ error?: string }> {
     if (error) return { error: error.message };
   } catch (e) {
     const msg = e instanceof Error ? e.message : "";
-    if (msg.includes("SERVICE_ROLE_KEY")) {
-      return { error: "Chưa cấu hình SUPABASE_SERVICE_ROLE_KEY trong .env — xem hướng dẫn bên dưới." };
+    if (msg === "SUPABASE_SERVICE_ROLE_KEY_MISSING") {
+      return { error: "Thiếu SUPABASE_SERVICE_ROLE_KEY. Nếu đã set trên Vercel → cần Redeploy. Local → restart dev server." };
     }
     return { error: msg || "Không thể xóa tài khoản." };
   }

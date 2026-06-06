@@ -167,7 +167,9 @@ export default function DangTinPage() {
   const [success, setSuccess] = useState(false);
   const [lat, setLat] = useState(0);
   const [lng, setLng] = useState(0);
+  const [showErrors, setShowErrors] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const topRef = useRef<HTMLDivElement>(null);
 
   const set = <K extends keyof FormData>(key: K, val: FormData[K]) =>
     setForm((f) => ({ ...f, [key]: val }));
@@ -192,10 +194,42 @@ export default function DangTinPage() {
   };
 
   const canNext = () => {
-    if (step === 1) return form.title.trim() && form.address.trim() && form.district && form.contact_phone.trim();
-    if (step === 2) return form.price.trim() && form.description.trim();
+    if (step === 1) return !!(form.title.trim() && form.address.trim() && form.district && form.contact_phone.trim());
+    if (step === 2) return !!(form.price.trim() && form.description.trim());
     if (step === 3) return form.images.length > 0;
     return true;
+  };
+
+  const getMissingFields = (): string[] => {
+    if (step === 1) {
+      const m: string[] = [];
+      if (!form.title.trim())        m.push("Tiêu đề tin đăng");
+      if (!form.address.trim())      m.push("Địa chỉ");
+      if (!form.district)            m.push("Phường / Khu vực");
+      if (!form.contact_phone.trim()) m.push("Số điện thoại liên hệ");
+      return m;
+    }
+    if (step === 2) {
+      const m: string[] = [];
+      if (!form.price.trim())       m.push("Giá thuê");
+      if (!form.description.trim()) m.push("Mô tả phòng");
+      return m;
+    }
+    if (step === 3 && form.images.length === 0) return ["Ít nhất 1 ảnh phòng"];
+    return [];
+  };
+
+  const goNext = () => {
+    if (!canNext()) { setShowErrors(true); return; }
+    setShowErrors(false);
+    setStep((s) => s + 1);
+    topRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const goBack = () => {
+    setShowErrors(false);
+    setStep((s) => s - 1);
+    topRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const handleSubmit = async () => {
@@ -318,7 +352,7 @@ export default function DangTinPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-2xl mx-auto" ref={topRef}>
       {/* Top bar */}
       <div className="sticky top-14 z-30 bg-white border-b border-gray-100 shadow-sm">
         <div className="flex items-center px-4 h-12 gap-3">
@@ -339,7 +373,7 @@ export default function DangTinPage() {
         <StepBar current={step} />
       </div>
 
-      <div className="px-4 py-5 pb-32">
+      <div className="px-4 py-5 pb-8">
         {/* ── STEP 1: Thông tin cơ bản ── */}
         {step === 1 && (
           <div className="space-y-5">
@@ -570,6 +604,21 @@ export default function DangTinPage() {
           </div>
         )}
 
+        {/* ── Validation errors ── */}
+        {showErrors && getMissingFields().length > 0 && (
+          <div className="mt-5 bg-red-50 border border-red-200 rounded-2xl px-4 py-3">
+            <p className="text-sm font-semibold text-red-700 mb-1.5">Vui lòng điền đầy đủ thông tin:</p>
+            <ul className="space-y-0.5">
+              {getMissingFields().map((f) => (
+                <li key={f} className="text-sm text-red-600 flex items-center gap-1.5">
+                  <span className="w-1 h-1 rounded-full bg-red-400 shrink-0" />
+                  {f}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         {/* ── STEP 4: Gói đăng & Xem trước ── */}
         {step === 4 && (
           <div className="space-y-5">
@@ -634,31 +683,28 @@ export default function DangTinPage() {
             )}
           </div>
         )}
-      </div>
-
-      {/* Bottom navigation */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-100 px-4 py-3 md:max-w-2xl md:mx-auto">
-        <div className="flex gap-3">
-          {step > 1 && (
-            <button onClick={() => setStep(step - 1)}
-              className="flex items-center gap-1.5 border border-gray-200 text-gray-700 font-medium px-5 py-3 rounded-xl hover:border-gray-300 transition-colors text-sm">
+        {/* ── Inline navigation ── */}
+        <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
+          {step > 1 ? (
+            <button onClick={goBack}
+              className="flex items-center gap-1.5 border border-gray-200 text-gray-700 font-medium px-5 py-3.5 rounded-2xl hover:border-gray-300 transition-colors text-sm">
               <ChevronLeft size={16} /> Quay lại
             </button>
+          ) : (
+            <Link href={`/${citySlug}`}
+              className="flex items-center gap-1.5 border border-gray-200 text-gray-700 font-medium px-5 py-3.5 rounded-2xl hover:border-gray-300 transition-colors text-sm">
+              <ChevronLeft size={16} /> Thoát
+            </Link>
           )}
 
           {step < 4 ? (
-            <button onClick={() => setStep(step + 1)} disabled={!canNext()}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-1.5 font-semibold py-3 rounded-xl transition-colors text-sm",
-                canNext()
-                  ? "bg-blue-600 hover:bg-blue-700 text-white"
-                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
-              )}>
+            <button onClick={goNext}
+              className="flex-1 flex items-center justify-center gap-1.5 font-semibold py-3.5 rounded-2xl transition-colors text-sm bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white">
               Tiếp theo <ChevronRight size={16} />
             </button>
           ) : (
             <button onClick={handleSubmit} disabled={submitting}
-              className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-colors text-sm">
+              className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-2xl transition-colors text-sm">
               {submitting ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
               {submitting ? "Đang đăng tin..." : "Đăng tin ngay"}
             </button>
