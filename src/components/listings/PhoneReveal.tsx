@@ -55,6 +55,7 @@ export default function PhoneReveal({ listingId, phone, phone2, currentUserId, l
       const supabase2 = createClient();
       const { data: prof } = await supabase2.from("profiles").select("credits").eq("user_id", currentUserId!).single();
       setRemainingCredits(prof?.credits ?? null);
+      router.refresh();
     } catch {
       setState("hidden");
     }
