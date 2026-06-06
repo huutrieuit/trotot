@@ -220,7 +220,7 @@ export default function MuaCreditClient({ packages, userEmail, bank, zalo, qrUrl
       {/* ── Liên hệ & thông báo ── */}
       {pkg && (
         <div className="space-y-2">
-          <a href={`https://zalo.me/${zalo}`} target="_blank" rel="noopener noreferrer"
+          <a href={`https://zalo.me/${zalo}?text=${encodeURIComponent(transferNote)}`} target="_blank" rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 w-full bg-[#0068FF] hover:opacity-90 text-white font-semibold py-3 rounded-xl transition-opacity">
             <MessageCircle size={18} />
             Nhắn Zalo xác nhận thanh toán
