@@ -73,24 +73,13 @@ export async function setUserRole(userId: string, role: "tenant" | "landlord" | 
 
 export async function approveCreditRequest(requestId: string, userId: string, credits: number) {
   const supabase = await requireAdmin();
-  // Cộng credits vào profile
-  const { data, error: fetchErr } = await supabase
-    .from("profiles")
-    .select("credits")
-    .eq("user_id", userId)
-    .single();
-  if (fetchErr || !data) throw new Error("Không tìm thấy user.");
-  const { error: updateErr } = await supabase
-    .from("profiles")
-    .update({ credits: data.credits + credits })
-    .eq("user_id", userId);
-  if (updateErr) throw new Error(updateErr.message);
-  // Đánh dấu request đã duyệt
-  const { error: reqErr } = await supabase
-    .from("credit_requests")
-    .update({ status: "approved", resolved_at: new Date().toISOString() })
-    .eq("id", requestId);
-  if (reqErr) throw new Error(reqErr.message);
+  // Atomic: cộng credit + đánh dấu approved trong 1 transaction, chặn double-approval
+  const { error } = await supabase.rpc("approve_credit_request", {
+    p_request_id: requestId,
+    p_user_id:    userId,
+    p_credits:    credits,
+  });
+  if (error) throw new Error(error.message);
   revalidatePath("/admin/yeu-cau-credit");
 }
 
@@ -109,17 +98,11 @@ export async function adjustCredits(userId: string, delta: number) {
     throw new Error("Số credit không hợp lệ (1–1000).");
   }
   const supabase = await requireAdmin();
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("credits")
-    .eq("user_id", userId)
-    .single();
-  if (error || !data) throw new Error("Không tìm thấy user.");
-  const next = Math.max(0, data.credits + delta);
-  const { error: upErr } = await supabase
-    .from("profiles")
-    .update({ credits: next })
-    .eq("user_id", userId);
-  if (upErr) throw new Error(upErr.message);
+  // Atomic: GREATEST(0, credits + delta) trong SQL, không cần SELECT trước
+  const { error } = await supabase.rpc("adjust_credits", {
+    p_user_id: userId,
+    p_delta:   delta,
+  });
+  if (error) throw new Error(error.message);
   revalidatePath("/admin/users");
 }
