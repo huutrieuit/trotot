@@ -20,6 +20,8 @@ import { notifyNewListing } from "@/app/actions/notify";
 
 const LeafletMap = dynamic(() => import("@/components/map/LeafletMap"), { ssr: false });
 
+const CREDIT_COST = 2;
+
 /* ─── Types ─── */
 interface FormData {
   // Step 1
@@ -39,8 +41,6 @@ interface FormData {
   amenities: Partial<Amenities>;
   // Step 3
   images: File[];
-  // Step 4
-  package: "free" | "standard" | "pro";
 }
 
 const INITIAL: FormData = {
@@ -58,7 +58,6 @@ const INITIAL: FormData = {
   description: "",
   amenities: {},
   images: [],
-  package: "free",
 };
 
 /* ─── Constants ─── */
@@ -80,39 +79,9 @@ const AMENITY_LIST: { key: keyof Amenities; icon: React.ElementType; label: stri
   { key: "pet", icon: PawPrint, label: "Nuôi thú cưng" },
 ];
 
-const PACKAGES = [
-  {
-    id: "free" as const,
-    label: "Miễn phí",
-    price: "0đ",
-    color: "border-gray-200",
-    activeColor: "border-blue-500 bg-blue-50",
-    badge: null,
-    features: ["3 tin/tháng", "Tối đa 5 ảnh", "Hiển thị bình thường"],
-  },
-  {
-    id: "standard" as const,
-    label: "Tiêu chuẩn",
-    price: "99k/tháng",
-    color: "border-gray-200",
-    activeColor: "border-blue-500 bg-blue-50",
-    badge: "Phổ biến",
-    features: ["Không giới hạn tin", "20 ảnh/tin", "Ưu tiên trang 1"],
-  },
-  {
-    id: "pro" as const,
-    label: "Pro",
-    price: "199k/tháng",
-    color: "border-gray-200",
-    activeColor: "border-orange-500 bg-orange-50",
-    badge: "Nổi bật",
-    features: ["Tất cả Tiêu chuẩn", "Đầu trang kết quả", "Badge chủ nhà Pro"],
-  },
-];
-
 /* ─── Step indicator ─── */
 function StepBar({ current }: { current: number }) {
-  const steps = ["Thông tin", "Tiện ích & Giá", "Ảnh phòng", "Đăng tin"];
+  const steps = ["Thông tin", "Tiện ích & Giá", "Ảnh phòng", "Xác nhận"];
   return (
     <div className="flex items-center px-4 py-3 bg-white border-b border-gray-100">
       {steps.map((label, i) => {
@@ -168,8 +137,20 @@ export default function DangTinPage() {
   const [lat, setLat] = useState(0);
   const [lng, setLng] = useState(0);
   const [showErrors, setShowErrors] = useState(false);
+  const [userCredits, setUserCredits] = useState<number | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const topRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (step !== 4) return;
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (!user) return;
+      supabase.from("profiles").select("credits").eq("user_id", user.id).single().then(({ data }) => {
+        setUserCredits(data?.credits ?? 0);
+      });
+    });
+  }, [step]);
 
   const set = <K extends keyof FormData>(key: K, val: FormData[K]) =>
     setForm((f) => ({ ...f, [key]: val }));
@@ -182,8 +163,7 @@ export default function DangTinPage() {
 
   const addImages = (files: FileList | null) => {
     if (!files) return;
-    const maxImages = form.package === "free" ? 5 : form.package === "standard" ? 20 : 30;
-    const newFiles = Array.from(files).slice(0, maxImages - form.images.length);
+    const newFiles = Array.from(files).slice(0, 10 - form.images.length);
     setForm((f) => ({ ...f, images: [...f.images, ...newFiles] }));
     newFiles.forEach((file) => setPreviews((p) => [...p, URL.createObjectURL(file)]));
   };
@@ -239,57 +219,54 @@ export default function DangTinPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Chưa đăng nhập");
 
-      // 1. Tạo listing record
-      const { data: listing, error: listingErr } = await supabase
-        .from("listings")
-        .insert({
-          landlord_id: user.id,
-          city: citySlug,
-          source: "landlord",
-          title: form.title.trim(),
-          description: form.description.trim(),
-          address: form.address.trim(),
-          district: form.district,
-          lat: lat || null,
-          lng: lng || null,
-          price: parseInt(form.price.replace(/\D/g, ""), 10),
-          area: form.area ? parseInt(form.area, 10) : null,
-          room_type: form.room_type,
-          max_occupants: parseInt(form.max_occupants, 10),
-          gender_preference: form.gender_preference,
-          contact_phone: form.contact_phone.trim(),
-          contact_phone2: form.contact_phone2.trim() || null,
-          amenities: {
-            wifi: !!form.amenities.wifi,
-            ac: !!form.amenities.ac,
-            washer: !!form.amenities.washer,
-            parking: !!form.amenities.parking,
-            security: !!form.amenities.security,
-            elevator: false,
-            kitchen: !!form.amenities.kitchen,
-            balcony: !!form.amenities.balcony,
-            pet: !!form.amenities.pet,
-          },
-          status: "pending",
-        })
-        .select("id")
-        .single();
+      // 1. Tạo listing + trừ credit atomically qua RPC
+      const { data: listingId, error: rpcErr } = await supabase.rpc("post_listing", {
+        p_city: citySlug,
+        p_title: form.title.trim(),
+        p_description: form.description.trim(),
+        p_address: form.address.trim(),
+        p_district: form.district,
+        p_lat: lat,
+        p_lng: lng,
+        p_price: parseInt(form.price.replace(/\D/g, ""), 10),
+        p_area: form.area ? parseInt(form.area, 10) : 0,
+        p_room_type: form.room_type,
+        p_max_occupants: parseInt(form.max_occupants, 10),
+        p_gender_preference: form.gender_preference,
+        p_contact_phone: form.contact_phone.trim(),
+        p_contact_phone2: form.contact_phone2.trim(),
+        p_amenities: {
+          wifi: !!form.amenities.wifi,
+          ac: !!form.amenities.ac,
+          washer: !!form.amenities.washer,
+          parking: !!form.amenities.parking,
+          security: !!form.amenities.security,
+          elevator: false,
+          kitchen: !!form.amenities.kitchen,
+          balcony: !!form.amenities.balcony,
+          pet: !!form.amenities.pet,
+        },
+      });
 
-      if (listingErr || !listing) throw listingErr ?? new Error("Không thể tạo tin");
+      if (rpcErr) {
+        if (rpcErr.message.includes("no_credits")) {
+          setUserCredits(0);
+          alert(`Không đủ credit để đăng tin. Cần ${CREDIT_COST} credits.`);
+          return;
+        }
+        throw rpcErr;
+      }
 
       // 2. Upload ảnh lên Storage
       const imageUrls: string[] = [];
       for (let i = 0; i < form.images.length; i++) {
         const file = form.images[i];
         const ext = file.name.split(".").pop() ?? "jpg";
-        const path = `${user.id}/${listing.id}/${i}-${Date.now()}.${ext}`;
+        const path = `${user.id}/${listingId}/${i}-${Date.now()}.${ext}`;
         const { data: uploadData, error: uploadErr } = await supabase.storage
           .from("listing-images")
           .upload(path, file, { upsert: true });
-        if (uploadErr) {
-          console.error(`Upload ảnh ${i} thất bại:`, uploadErr.message);
-          throw new Error(`Upload ảnh thất bại: ${uploadErr.message}`);
-        }
+        if (uploadErr) throw new Error(`Upload ảnh thất bại: ${uploadErr.message}`);
         if (uploadData) {
           const { data: urlData } = supabase.storage.from("listing-images").getPublicUrl(path);
           imageUrls.push(urlData.publicUrl);
@@ -299,14 +276,14 @@ export default function DangTinPage() {
       // 3. Lưu listing_images
       if (imageUrls.length > 0) {
         const { error: imgInsertErr } = await supabase.from("listing_images").insert(
-          imageUrls.map((url, order) => ({ listing_id: listing.id, url, order }))
+          imageUrls.map((url, order) => ({ listing_id: listingId, url, order }))
         );
         if (imgInsertErr) throw new Error(`Lưu ảnh thất bại: ${imgInsertErr.message}`);
       }
 
       // Fire-and-forget: notify admin (failure must not block user)
       notifyNewListing({
-        listingId: listing.id,
+        listingId,
         title: form.title.trim(),
         address: form.address.trim(),
         price: parseInt(form.price.replace(/\D/g, ""), 10),
@@ -548,11 +525,9 @@ export default function DangTinPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-semibold text-gray-900">Ảnh phòng</p>
-                <p className="text-xs text-gray-500 mt-0.5">
-                  Gói Free: tối đa 5 ảnh · Tiêu chuẩn: 20 ảnh · Pro: không giới hạn
-                </p>
+                <p className="text-xs text-gray-500 mt-0.5">Tối đa 10 ảnh · JPG, PNG</p>
               </div>
-              <span className="text-sm font-medium text-blue-600">{form.images.length} ảnh</span>
+              <span className="text-sm font-medium text-blue-600">{form.images.length}/10 ảnh</span>
             </div>
 
             {/* Upload zone */}
@@ -586,7 +561,7 @@ export default function DangTinPage() {
                     </button>
                   </div>
                 ))}
-                {form.images.length < 5 && (
+                {form.images.length < 10 && (
                   <button type="button" onClick={() => fileRef.current?.click()}
                     className="aspect-square rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center hover:border-blue-400 hover:bg-blue-50 transition-all">
                     <Upload size={20} className="text-gray-400" />
@@ -619,49 +594,36 @@ export default function DangTinPage() {
           </div>
         )}
 
-        {/* ── STEP 4: Gói đăng & Xem trước ── */}
+        {/* ── STEP 4: Xác nhận & Chi phí ── */}
         {step === 4 && (
           <div className="space-y-5">
-            {/* Package selection */}
-            <div>
-              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Chọn gói đăng tin</p>
-              <div className="space-y-3">
-                {PACKAGES.map((pkg) => (
-                  <button key={pkg.id} type="button" onClick={() => set("package", pkg.id)}
-                    className={cn(
-                      "w-full flex items-start gap-4 p-4 rounded-2xl border-2 transition-all text-left",
-                      form.package === pkg.id ? pkg.activeColor : "border-gray-200 bg-white hover:border-gray-300"
-                    )}>
-                    <div className={cn(
-                      "w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-0.5",
-                      form.package === pkg.id ? "border-blue-600" : "border-gray-300"
-                    )}>
-                      {form.package === pkg.id && <div className="w-2.5 h-2.5 rounded-full bg-blue-600" />}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-gray-900">{pkg.label}</span>
-                        {pkg.badge && (
-                          <span className={cn(
-                            "text-[10px] font-bold px-1.5 py-0.5 rounded-full",
-                            pkg.id === "pro" ? "bg-orange-100 text-orange-600" : "bg-blue-100 text-blue-600"
-                          )}>
-                            {pkg.badge}
-                          </span>
-                        )}
-                        <span className="ml-auto font-bold text-blue-700">{pkg.price}</span>
-                      </div>
-                      <ul className="mt-1.5 space-y-0.5">
-                        {pkg.features.map((f) => (
-                          <li key={f} className="flex items-center gap-1.5 text-xs text-gray-600">
-                            <Check size={11} className="text-green-500 shrink-0" /> {f}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </button>
-                ))}
+            {/* Credit info */}
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 space-y-3">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Chi phí đăng tin</p>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Zap size={18} className="text-blue-600" />
+                  <span className="text-sm font-medium text-gray-700">Đăng 1 tin</span>
+                </div>
+                <span className="font-bold text-blue-700">{CREDIT_COST} credits</span>
               </div>
+              {userCredits !== null && (
+                <div className="flex items-center justify-between pt-2 border-t border-blue-200">
+                  <span className="text-sm text-gray-600">Số dư của bạn</span>
+                  <span className={cn("font-bold text-sm", userCredits >= CREDIT_COST ? "text-green-600" : "text-red-500")}>
+                    {userCredits} credits
+                  </span>
+                </div>
+              )}
+              {userCredits !== null && userCredits < CREDIT_COST && (
+                <div className="pt-2 border-t border-blue-200">
+                  <p className="text-xs text-red-600 mb-2">Không đủ credit để đăng tin.</p>
+                  <Link href={`/${citySlug}/mua-credit`}
+                    className="text-xs font-semibold text-blue-700 underline">
+                    Mua thêm credit →
+                  </Link>
+                </div>
+              )}
             </div>
 
             {/* Review summary */}
@@ -673,14 +635,7 @@ export default function DangTinPage() {
               <ReviewRow label="Diện tích" value={form.area ? `${form.area} m²` : "—"} />
               <ReviewRow label="Giá thuê" value={form.price ? `${Number(form.price).toLocaleString("vi-VN")}đ/tháng` : "—"} />
               <ReviewRow label="Số ảnh" value={`${form.images.length} ảnh`} />
-              <ReviewRow label="Gói đăng" value={PACKAGES.find((p) => p.id === form.package)?.label ?? ""} />
             </div>
-
-            {form.package !== "free" && (
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 text-xs text-blue-700">
-                Thanh toán bằng <strong>chuyển khoản ngân hàng</strong>. Sau khi đăng tin, admin sẽ xác nhận trong vòng 2 giờ.
-              </div>
-            )}
           </div>
         )}
         {/* ── Inline navigation ── */}
@@ -703,10 +658,12 @@ export default function DangTinPage() {
               Tiếp theo <ChevronRight size={16} />
             </button>
           ) : (
-            <button onClick={handleSubmit} disabled={submitting}
+            <button
+              onClick={handleSubmit}
+              disabled={submitting || (userCredits !== null && userCredits < CREDIT_COST)}
               className="flex-1 flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 active:bg-orange-700 disabled:opacity-60 text-white font-bold py-3.5 rounded-2xl transition-colors text-sm">
               {submitting ? <Loader2 size={16} className="animate-spin" /> : <Zap size={16} />}
-              {submitting ? "Đang đăng tin..." : "Đăng tin ngay"}
+              {submitting ? "Đang đăng tin..." : `Đăng tin · ${CREDIT_COST} credits`}
             </button>
           )}
         </div>
