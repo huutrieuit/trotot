@@ -54,8 +54,23 @@ export async function rejectListing(id: string) {
 
 export async function deleteListing(id: string) {
   const supabase = await requireAnyAdmin();
-  // Xóa ảnh trước
-  await supabase.from("listing_images").delete().eq("listing_id", id);
+
+  // Xóa file ảnh khỏi Storage trước
+  const { data: images } = await supabase
+    .from("listing_images")
+    .select("url")
+    .eq("listing_id", id);
+
+  if (images && images.length > 0) {
+    const paths = images.map((img) => {
+      const url = new URL(img.url);
+      return decodeURIComponent(url.pathname.split("/listing-images/")[1] ?? "");
+    }).filter(Boolean);
+    if (paths.length > 0) {
+      await supabase.storage.from("listing-images").remove(paths);
+    }
+  }
+
   const { error } = await supabase.from("listings").delete().eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/duyet-tin");

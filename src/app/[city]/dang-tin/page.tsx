@@ -173,9 +173,23 @@ export default function DangTinPage() {
     setPreviews((p) => p.filter((_, idx) => idx !== i));
   };
 
+  const isValidPhone = (p: string) => /^0\d{9}$/.test(p);
+
   const canNext = () => {
-    if (step === 1) return !!(form.title.trim() && form.address.trim() && form.district && form.contact_phone.trim());
-    if (step === 2) return !!(form.price.trim() && form.description.trim());
+    if (step === 1) {
+      const phone2 = form.contact_phone2.trim();
+      return !!(
+        form.title.trim().length >= 10 &&
+        form.address.trim() &&
+        form.district &&
+        isValidPhone(form.contact_phone) &&
+        (!phone2 || isValidPhone(phone2))
+      );
+    }
+    if (step === 2) {
+      const price = parseInt(form.price.replace(/\D/g, ""), 10);
+      return !!(form.price.trim() && !isNaN(price) && price >= 100_000 && form.description.trim());
+    }
     if (step === 3) return form.images.length > 0;
     return true;
   };
@@ -183,16 +197,22 @@ export default function DangTinPage() {
   const getMissingFields = (): string[] => {
     if (step === 1) {
       const m: string[] = [];
-      if (!form.title.trim())        m.push("Tiêu đề tin đăng");
-      if (!form.address.trim())      m.push("Địa chỉ");
-      if (!form.district)            m.push("Phường / Khu vực");
-      if (!form.contact_phone.trim()) m.push("Số điện thoại liên hệ");
+      if (!form.title.trim())                    m.push("Tiêu đề tin đăng");
+      else if (form.title.trim().length < 10)    m.push("Tiêu đề cần ít nhất 10 ký tự");
+      if (!form.address.trim())                  m.push("Địa chỉ");
+      if (!form.district)                        m.push("Phường / Khu vực");
+      if (!form.contact_phone.trim())            m.push("Số điện thoại liên hệ");
+      else if (!isValidPhone(form.contact_phone)) m.push("SĐT liên hệ không hợp lệ (10 số, bắt đầu bằng 0)");
+      const phone2 = form.contact_phone2.trim();
+      if (phone2 && !isValidPhone(phone2))       m.push("SĐT phụ không hợp lệ (10 số, bắt đầu bằng 0)");
       return m;
     }
     if (step === 2) {
       const m: string[] = [];
-      if (!form.price.trim())       m.push("Giá thuê");
-      if (!form.description.trim()) m.push("Mô tả phòng");
+      const price = parseInt(form.price.replace(/\D/g, ""), 10);
+      if (!form.price.trim())                     m.push("Giá thuê");
+      else if (isNaN(price) || price < 100_000)   m.push("Giá thuê tối thiểu 100,000đ");
+      if (!form.description.trim())               m.push("Mô tả phòng");
       return m;
     }
     if (step === 3 && form.images.length === 0) return ["Ít nhất 1 ảnh phòng"];
@@ -444,16 +464,16 @@ export default function DangTinPage() {
               <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Thông tin liên hệ</p>
               <Field label="Số điện thoại liên hệ *">
                 <input type="tel" value={form.contact_phone}
-                  onChange={(e) => set("contact_phone", e.target.value)}
-                  placeholder="09xx xxx xxx"
-                  className={inputCls} />
-                <p className="text-xs text-gray-400 mt-1">Số này sẽ hiển thị cho người thuê liên hệ.</p>
+                  onChange={(e) => set("contact_phone", e.target.value.replace(/\D/g, "").slice(0, 10))}
+                  placeholder="0901234567"
+                  className={inputCls} maxLength={10} inputMode="numeric" />
+                <p className="text-xs text-gray-400 mt-1">10 số, bắt đầu bằng 0. Số này hiển thị cho người thuê liên hệ.</p>
               </Field>
               <Field label="Số điện thoại phụ (tuỳ chọn)">
                 <input type="tel" value={form.contact_phone2}
-                  onChange={(e) => set("contact_phone2", e.target.value)}
-                  placeholder="Zalo, Viber,... (không bắt buộc)"
-                  className={inputCls} />
+                  onChange={(e) => set("contact_phone2", e.target.value.replace(/\D/g, "").slice(0, 10))}
+                  placeholder="0901234567 (Zalo, Viber,...)"
+                  className={inputCls} maxLength={10} inputMode="numeric" />
               </Field>
             </div>
           </div>
