@@ -121,14 +121,26 @@ export async function unblockUser(userId: string) {
   revalidatePath("/admin/nhan-vien");
 }
 
-export async function deleteUser(userId: string) {
-  await requireAdmin();
-  // Hard delete qua service role (cascade xóa profile + data liên quan)
-  const admin = createAdminClient();
-  const { error } = await admin.auth.admin.deleteUser(userId);
-  if (error) throw new Error(error.message);
+export async function deleteUser(userId: string): Promise<{ error?: string }> {
+  try {
+    await requireAdmin();
+  } catch {
+    return { error: "Không có quyền thực hiện thao tác này." };
+  }
+  try {
+    const admin = createAdminClient();
+    const { error } = await admin.auth.admin.deleteUser(userId);
+    if (error) return { error: error.message };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "";
+    if (msg.includes("SERVICE_ROLE_KEY")) {
+      return { error: "Chưa cấu hình SUPABASE_SERVICE_ROLE_KEY trong .env — xem hướng dẫn bên dưới." };
+    }
+    return { error: msg || "Không thể xóa tài khoản." };
+  }
   revalidatePath("/admin/users");
   revalidatePath("/admin/nhan-vien");
+  return {};
 }
 
 export async function demoteStaff(userId: string) {

@@ -68,19 +68,19 @@ export default async function NhanVienPage() {
               <tbody className="divide-y divide-gray-50">
                 {rows.map((s) => (
                   <tr key={s.user_id} className="hover:bg-gray-50/50 transition-colors">
-                    {/* Info */}
+                    {/* Info — clickable → detail page */}
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-sm shrink-0">
+                      <Link href={`/admin/nhan-vien/${s.user_id}`} className="flex items-center gap-3 group">
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${s.blocked ? "bg-red-100 text-red-600" : "bg-purple-100 text-purple-700"}`}>
                           {(s.full_name || s.email || "?")[0].toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">
+                          <p className="font-medium text-gray-900 group-hover:text-purple-600 transition-colors">
                             {s.full_name || <span className="text-gray-400 italic text-xs">Chưa đặt tên</span>}
                           </p>
                           <p className="text-xs text-gray-400">{s.email || s.user_id.slice(0, 12) + "…"}</p>
                         </div>
-                      </div>
+                      </Link>
                     </td>
 
                     {/* Status */}

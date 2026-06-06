@@ -50,7 +50,14 @@ export default function UserActions({ userId, name, blocked, isSelf }: Props) {
                 Hủy
               </button>
               <button
-                onClick={() => { setConfirmDelete(false); run(() => deleteUser(userId)); }}
+                onClick={() => {
+                setConfirmDelete(false);
+                setError("");
+                startTransition(async () => {
+                  const result = await deleteUser(userId);
+                  if (result?.error) setError(result.error);
+                });
+              }}
                 className="flex-1 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-sm font-semibold text-white">
                 Xóa vĩnh viễn
               </button>

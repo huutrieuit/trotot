@@ -58,11 +58,17 @@ export default function StaffActions({ userId, name, blocked }: Props) {
               </button>
               <button
                 onClick={() => {
-                  const fn = confirm === "demote"
-                    ? () => demoteStaff(userId)
-                    : () => deleteUser(userId);
-                  setConfirm(null);
-                  run(fn);
+                  if (confirm === "demote") {
+                    setConfirm(null);
+                    run(() => demoteStaff(userId));
+                  } else {
+                    setConfirm(null);
+                    setError("");
+                    startTransition(async () => {
+                      const result = await deleteUser(userId);
+                      if (result?.error) setError(result.error);
+                    });
+                  }
                 }}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-semibold text-white transition-colors ${
                   confirm === "delete" ? "bg-red-500 hover:bg-red-600" : "bg-orange-500 hover:bg-orange-600"

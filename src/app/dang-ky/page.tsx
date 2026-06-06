@@ -43,7 +43,7 @@ export default function DangKyPage() {
 
     setLoading(true);
     const supabase = createClient();
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: form.email,
       password: form.password,
       options: {
@@ -62,6 +62,12 @@ export default function DangKyPage() {
       } else {
         setError(signUpError.message);
       }
+      return;
+    }
+    // Supabase bật "email enumeration protection": email đã tồn tại → trả error=null
+    // nhưng identities rỗng. Phải kiểm tra thêm để tránh hiển thị "thành công" giả.
+    if (!signUpData.user || signUpData.user.identities?.length === 0) {
+      setError("Email này đã được đăng ký rồi. Hãy đăng nhập hoặc dùng email khác.");
       return;
     }
     if (pendingRef) localStorage.setItem(PENDING_REF_KEY, pendingRef);
