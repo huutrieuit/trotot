@@ -17,7 +17,8 @@ export default function QuenMatKhauPage() {
     setError("");
     const { createClient } = await import("@/lib/supabase/client");
     const supabase = createClient();
-    const redirectTo = `${window.location.origin}/dat-lai-mat-khau`;
+    // PKCE flow: phải đi qua /auth/callback để exchange code trước
+    const redirectTo = `${window.location.origin}/auth/callback?next=/dat-lai-mat-khau`;
     const { error: err } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
     setLoading(false);
     if (err) { setError(err.message); return; }

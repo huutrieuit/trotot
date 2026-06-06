@@ -52,7 +52,16 @@ export default function DangKyPage() {
     });
     setLoading(false);
     if (signUpError) {
-      setError(signUpError.message);
+      const msg = signUpError.message.toLowerCase();
+      if (msg.includes("already registered") || msg.includes("already been registered") || msg.includes("already exists")) {
+        setError("Email này đã được đăng ký rồi. Hãy đăng nhập hoặc dùng email khác.");
+      } else if (msg.includes("invalid email")) {
+        setError("Email không hợp lệ.");
+      } else if (msg.includes("password")) {
+        setError("Mật khẩu không hợp lệ.");
+      } else {
+        setError(signUpError.message);
+      }
       return;
     }
     if (pendingRef) localStorage.setItem(PENDING_REF_KEY, pendingRef);
