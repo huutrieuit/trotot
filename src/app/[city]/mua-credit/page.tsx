@@ -43,6 +43,8 @@ export default async function MuaCreditPage({ params }: Props) {
     standard: s.qr_standard ?? "",
     pro:      s.qr_pro      ?? "",
   };
+  const SHOW_PHONE_SUPPORT   = s.show_phone_support   === "true";
+  const SHOW_MANUAL_TRANSFER = s.show_manual_transfer === "true";
 
   return (
     <div className="max-w-lg mx-auto px-4 py-6 pb-24">
@@ -72,6 +74,8 @@ export default async function MuaCreditPage({ params }: Props) {
         bank={BANK}
         zalo={ZALO}
         qrUrls={QR_URLS}
+        showPhoneSupport={SHOW_PHONE_SUPPORT}
+        showManualTransfer={SHOW_MANUAL_TRANSFER}
       />
     </div>
   );

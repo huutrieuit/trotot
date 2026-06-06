@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Save, Loader2, CheckCircle2, Upload, QrCode } from "lucide-react";
+import { Save, Loader2, CheckCircle2, Upload, QrCode, Phone, CreditCard } from "lucide-react";
 
 interface Props {
   defaultValues: Record<string, string>;
@@ -22,6 +22,21 @@ const QR_PACKAGES = [
   { key: "qr_pro",      label: "Gói Cao cấp (50 credit)" },
 ];
 
+const DISPLAY_TOGGLES = [
+  {
+    key: "show_phone_support",
+    label: "Hiển thị nút Gọi hỗ trợ",
+    description: "Cho phép người dùng gọi điện trực tiếp khi mua credit",
+    icon: Phone,
+  },
+  {
+    key: "show_manual_transfer",
+    label: "Hiển thị chuyển khoản thủ công",
+    description: "Hiển thị thông tin số tài khoản để chuyển khoản thủ công (không qua QR)",
+    icon: CreditCard,
+  },
+];
+
 export default function SettingsForm({ defaultValues }: Props) {
   const [values, setValues] = useState<Record<string, string>>(defaultValues);
   const [saving, setSaving] = useState(false);
@@ -30,7 +45,11 @@ export default function SettingsForm({ defaultValues }: Props) {
   const [uploading, setUploading] = useState<string | null>(null);
   const fileRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const allKeys = [...BANK_FIELDS.map((f) => f.key), ...QR_PACKAGES.map((p) => p.key)];
+  const allKeys = [
+    ...BANK_FIELDS.map((f) => f.key),
+    ...QR_PACKAGES.map((p) => p.key),
+    ...DISPLAY_TOGGLES.map((t) => t.key),
+  ];
 
   const handleSave = async () => {
     setSaving(true);
@@ -144,6 +163,35 @@ export default function SettingsForm({ defaultValues }: Props) {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Display toggles */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+        <div>
+          <h2 className="font-semibold text-gray-800 mb-1">Tùy chọn hiển thị</h2>
+          <p className="text-xs text-gray-400">Kiểm soát những phần nào hiển thị cho người dùng khi mua credit.</p>
+        </div>
+        {DISPLAY_TOGGLES.map(({ key, label, description, icon: Icon }) => {
+          const enabled = values[key] === "true";
+          return (
+            <div key={key} className="flex items-center justify-between gap-4">
+              <div className="flex items-start gap-2.5">
+                <Icon size={15} className={enabled ? "text-orange-500 mt-0.5 shrink-0" : "text-gray-400 mt-0.5 shrink-0"} />
+                <div>
+                  <p className="text-sm font-medium text-gray-700">{label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{description}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setValues((v) => ({ ...v, [key]: enabled ? "false" : "true" }))}
+                className={`relative shrink-0 w-11 h-6 rounded-full transition-colors ${enabled ? "bg-orange-500" : "bg-gray-200"}`}
+              >
+                <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${enabled ? "translate-x-6" : "translate-x-1"}`} />
+              </button>
+            </div>
+          );
+        })}
       </div>
 
       {error && (

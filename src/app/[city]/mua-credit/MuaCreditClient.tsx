@@ -28,13 +28,15 @@ interface Props {
   bank: Bank;
   zalo: string;
   qrUrls: Record<string, string>;
+  showPhoneSupport: boolean;
+  showManualTransfer: boolean;
 }
 
 function fmt(n: number) {
   return n.toLocaleString("vi-VN") + "đ";
 }
 
-export default function MuaCreditClient({ packages, userEmail, bank, zalo, qrUrls }: Props) {
+export default function MuaCreditClient({ packages, userEmail, bank, zalo, qrUrls, showPhoneSupport, showManualTransfer }: Props) {
   const [selected, setSelected] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
@@ -168,32 +170,34 @@ export default function MuaCreditClient({ packages, userEmail, bank, zalo, qrUrl
               </div>
             )}
 
-            {/* Bank info */}
-            <div className="bg-gray-50 rounded-xl p-4 space-y-2.5 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-500 text-xs">Ngân hàng</span>
-                <span className="font-medium text-gray-800">{bank.name}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-500 text-xs">Chủ tài khoản</span>
-                <span className="font-medium text-gray-800">{bank.owner || "—"}</span>
-              </div>
-              <div className="flex items-center justify-between border-t border-gray-200 pt-2.5">
-                <span className="text-gray-500 text-xs">Số tài khoản</span>
-                <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-gray-900 font-mono">{bank.account || "—"}</span>
-                  {bank.account && (
-                    <button onClick={() => copy(bank.account, "account")} className="text-blue-500 hover:text-blue-700">
-                      {copiedAccount ? <CheckCheck size={13} /> : <Copy size={13} />}
-                    </button>
-                  )}
+            {/* Bank info – chỉ hiện khi admin bật chuyển khoản thủ công */}
+            {showManualTransfer && (
+              <div className="bg-gray-50 rounded-xl p-4 space-y-2.5 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500 text-xs">Ngân hàng</span>
+                  <span className="font-medium text-gray-800">{bank.name}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-500 text-xs">Chủ tài khoản</span>
+                  <span className="font-medium text-gray-800">{bank.owner || "—"}</span>
+                </div>
+                <div className="flex items-center justify-between border-t border-gray-200 pt-2.5">
+                  <span className="text-gray-500 text-xs">Số tài khoản</span>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-gray-900 font-mono">{bank.account || "—"}</span>
+                    {bank.account && (
+                      <button onClick={() => copy(bank.account, "account")} className="text-blue-500 hover:text-blue-700">
+                        {copiedAccount ? <CheckCheck size={13} /> : <Copy size={13} />}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between border-t border-gray-200 pt-2.5">
+                  <span className="text-gray-500 text-xs">Số tiền</span>
+                  <span className="font-bold text-orange-500">{fmt(pkg.price)}</span>
                 </div>
               </div>
-              <div className="flex items-center justify-between border-t border-gray-200 pt-2.5">
-                <span className="text-gray-500 text-xs">Số tiền</span>
-                <span className="font-bold text-orange-500">{fmt(pkg.price)}</span>
-              </div>
-            </div>
+            )}
 
             {/* Transfer note */}
             <div className="mt-3 bg-amber-50 border border-amber-200 rounded-xl p-3">
@@ -221,7 +225,7 @@ export default function MuaCreditClient({ packages, userEmail, bank, zalo, qrUrl
             <MessageCircle size={18} />
             Nhắn Zalo xác nhận thanh toán
           </a>
-          {zalo && (
+          {showPhoneSupport && zalo && (
             <a href={`tel:${zalo}`}
               className="flex items-center justify-center gap-2 w-full border border-gray-200 text-gray-700 hover:border-blue-300 font-medium py-2.5 rounded-xl transition-colors text-sm">
               <Phone size={16} />
