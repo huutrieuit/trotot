@@ -1,13 +1,14 @@
 import Link from "next/link";
-import { ShieldCheck, LayoutDashboard, PlusSquare, ListChecks, Users, LayoutList } from "lucide-react";
+import { ShieldCheck, LayoutDashboard, PlusSquare, ListChecks, Users, LayoutList, Zap } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 
 const ALL_NAV = [
-  { href: "/admin",            icon: LayoutDashboard, label: "Tổng quan",    adminOnly: false },
-  { href: "/admin/dang-tin",   icon: PlusSquare,      label: "Đăng tin",     adminOnly: false },
-  { href: "/admin/duyet-tin",  icon: ListChecks,      label: "Duyệt tin",    adminOnly: false },
-  { href: "/admin/quan-ly-tin",icon: LayoutList,      label: "Quản lý tin",  adminOnly: false },
-  { href: "/admin/users",      icon: Users,           label: "Người dùng",   adminOnly: true  },
+  { href: "/admin",                icon: LayoutDashboard, label: "Tổng quan",        adminOnly: false },
+  { href: "/admin/dang-tin",       icon: PlusSquare,      label: "Đăng tin",          adminOnly: false },
+  { href: "/admin/duyet-tin",      icon: ListChecks,      label: "Duyệt tin",         adminOnly: false },
+  { href: "/admin/quan-ly-tin",    icon: LayoutList,      label: "Quản lý tin",       adminOnly: false },
+  { href: "/admin/yeu-cau-credit", icon: Zap,             label: "Yêu cầu credit",    adminOnly: false },
+  { href: "/admin/users",          icon: Users,           label: "Người dùng",        adminOnly: true  },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -19,6 +20,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     role = profile?.role ?? "guest";
   }
   const isFullAdmin = role === "admin";
+
+  // Đếm yêu cầu credit đang chờ duyệt
+  const { count: pendingCredits } = await supabase
+    .from("credit_requests")
+    .select("*", { count: "exact", head: true })
+    .eq("status", "pending");
+
   const nav = ALL_NAV.filter((item) => !item.adminOnly || isFullAdmin);
 
   return (
@@ -37,13 +45,22 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </div>
 
         <nav className="flex items-center gap-1 ml-4 overflow-x-auto no-scrollbar">
-          {nav.map(({ href, icon: Icon, label }) => (
-            <Link key={href} href={href}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-300 hover:bg-white/10 hover:text-white transition-colors whitespace-nowrap">
-              <Icon size={14} />
-              {label}
-            </Link>
-          ))}
+          {nav.map(({ href, icon: Icon, label }) => {
+            const isCreditNav = href === "/admin/yeu-cau-credit";
+            const badge = isCreditNav && pendingCredits ? pendingCredits : null;
+            return (
+              <Link key={href} href={href}
+                className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-300 hover:bg-white/10 hover:text-white transition-colors whitespace-nowrap">
+                <Icon size={14} />
+                {label}
+                {badge && (
+                  <span className="ml-0.5 bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none">
+                    {badge}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="ml-auto shrink-0">

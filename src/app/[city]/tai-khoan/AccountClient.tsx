@@ -379,8 +379,8 @@ export default function AccountClient({ citySlug, userId, email, fullName, avata
         </div>
       )}
 
-      {/* ── Credit ── */}
-      {credits !== null && (
+      {/* ── Credit (ẩn với admin) ── */}
+      {credits !== null && role !== "admin" && role !== "sub_admin" && (
         <div className="bg-white rounded-2xl border border-gray-100 p-5 mb-4">
           <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-100">
             <div className="w-7 h-7 bg-amber-50 rounded-lg flex items-center justify-center">

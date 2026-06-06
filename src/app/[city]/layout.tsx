@@ -27,7 +27,6 @@ export default async function CityLayout({ children, params }: Props) {
       .single();
     credits = profile?.credits ?? null;
     role = profile?.role ?? null;
-    console.log("[CityLayout] profile role:", role, "user_id:", user.id);
   }
 
   const authUser = user

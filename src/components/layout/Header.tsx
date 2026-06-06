@@ -79,7 +79,7 @@ export default function Header({ citySlug, cityName, user }: Props) {
                     </div>
                   )}
                   <span className="text-sm font-medium text-gray-700 max-w-[120px] truncate">{user.name}</span>
-                  {user.credits !== null && (
+                  {user.credits !== null && user.role !== "admin" && user.role !== "sub_admin" && (
                     <span className="text-[11px] font-semibold bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded-full">
                       {user.credits} cr
                     </span>
@@ -91,7 +91,7 @@ export default function Header({ citySlug, cityName, user }: Props) {
                   <>
                     <div className="fixed inset-0 z-10" onClick={() => setUserMenuOpen(false)} />
                     <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-20">
-                      {user.credits !== null && (
+                      {user.credits !== null && user.role !== "admin" && user.role !== "sub_admin" && (
                         <div className="px-4 py-2 border-b border-gray-100 flex items-center justify-between">
                           <span className="text-xs text-gray-500">Credit hiện tại</span>
                           <span className="text-sm font-bold text-orange-500">{user.credits} credit</span>
@@ -107,11 +107,13 @@ export default function Header({ citySlug, cityName, user }: Props) {
                         <User size={15} />
                         Tài khoản của tôi
                       </Link>
-                      <Link href={`${base}/mua-credit`} onClick={() => setUserMenuOpen(false)}
-                        className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-orange-600 hover:bg-orange-50">
-                        <CreditCard size={15} />
-                        Mua thêm credit
-                      </Link>
+                      {user.role !== "admin" && user.role !== "sub_admin" && (
+                        <Link href={`${base}/mua-credit`} onClick={() => setUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-orange-600 hover:bg-orange-50">
+                          <CreditCard size={15} />
+                          Mua thêm credit
+                        </Link>
+                      )}
                       {(user.role === "admin" || user.role === "sub_admin") && (
                         <>
                           <div className="border-t border-gray-100 my-1" />
@@ -182,7 +184,7 @@ export default function Header({ citySlug, cityName, user }: Props) {
                   className="text-xs text-blue-600">Xem tài khoản</Link>
               </div>
             </div>
-            {user.credits !== null && (
+            {user.credits !== null && user.role !== "admin" && user.role !== "sub_admin" && (
               <div className="flex items-center justify-between bg-white rounded-xl px-3 py-2 border border-orange-100">
                 <span className="text-xs text-gray-500">Credit của tôi</span>
                 <div className="flex items-center gap-2">
