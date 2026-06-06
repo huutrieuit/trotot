@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { Users, ShieldCheck, Home, Building2, ShieldOff } from "lucide-react";
 import RoleSelect from "./RoleSelect";
 import CreditInput from "./CreditInput";
@@ -64,15 +65,15 @@ export default async function AdminUsersPage() {
                 const isMe = u.user_id === user.id;
                 return (
                   <tr key={u.user_id} className={`hover:bg-gray-50/50 transition-colors ${u.blocked ? "bg-red-50/30" : isMe ? "bg-blue-50/30" : ""}`}>
-                    {/* Name + email */}
+                    {/* Name + email — clickable → detail */}
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2.5">
+                      <Link href={`/admin/users/${u.user_id}`} className="flex items-center gap-2.5 group">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-xs shrink-0 ${u.blocked ? "bg-red-100 text-red-600" : "bg-gray-100 text-gray-600"}`}>
                           {(u.full_name || u.email || "?")[0].toUpperCase()}
                         </div>
                         <div>
                           <div className="flex items-center gap-1.5">
-                            <p className="font-medium text-gray-900">
+                            <p className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
                               {u.full_name || <span className="text-gray-400 italic text-xs">Chưa đặt tên</span>}
                             </p>
                             {isMe && <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-semibold">Bạn</span>}
@@ -80,7 +81,7 @@ export default async function AdminUsersPage() {
                           </div>
                           <p className="text-[11px] text-gray-400">{u.email || u.user_id.slice(0, 12) + "…"}</p>
                         </div>
-                      </div>
+                      </Link>
                     </td>
 
                     <td className="px-4 py-3 text-gray-600">{u.phone || <span className="text-gray-300">—</span>}</td>
