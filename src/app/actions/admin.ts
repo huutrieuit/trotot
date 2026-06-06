@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // Chỉ full admin (role = 'admin') — dùng cho quản lý user
 async function requireAdmin() {
@@ -91,6 +92,51 @@ export async function rejectCreditRequest(requestId: string) {
     .eq("id", requestId);
   if (error) throw new Error(error.message);
   revalidatePath("/admin/yeu-cau-credit");
+}
+
+export async function blockUser(userId: string) {
+  const supabase = await requireAdmin();
+  const { error } = await supabase
+    .from("profiles").update({ blocked: true }).eq("user_id", userId);
+  if (error) throw new Error(error.message);
+  // Ban ở tầng auth để vô hiệu hoá session ngay lập tức
+  try {
+    const admin = createAdminClient();
+    await admin.auth.admin.updateUserById(userId, { ban_duration: "87600h" });
+  } catch { /* service role chưa cấu hình — chỉ block ở tầng app */ }
+  revalidatePath("/admin/users");
+  revalidatePath("/admin/nhan-vien");
+}
+
+export async function unblockUser(userId: string) {
+  const supabase = await requireAdmin();
+  const { error } = await supabase
+    .from("profiles").update({ blocked: false }).eq("user_id", userId);
+  if (error) throw new Error(error.message);
+  try {
+    const admin = createAdminClient();
+    await admin.auth.admin.updateUserById(userId, { ban_duration: "none" });
+  } catch { /* service role chưa cấu hình */ }
+  revalidatePath("/admin/users");
+  revalidatePath("/admin/nhan-vien");
+}
+
+export async function deleteUser(userId: string) {
+  await requireAdmin();
+  // Hard delete qua service role (cascade xóa profile + data liên quan)
+  const admin = createAdminClient();
+  const { error } = await admin.auth.admin.deleteUser(userId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/users");
+  revalidatePath("/admin/nhan-vien");
+}
+
+export async function demoteStaff(userId: string) {
+  const supabase = await requireAdmin();
+  const { error } = await supabase
+    .from("profiles").update({ role: "tenant" }).eq("user_id", userId);
+  if (error) throw new Error(error.message);
+  revalidatePath("/admin/nhan-vien");
 }
 
 export async function adjustCredits(userId: string, delta: number) {

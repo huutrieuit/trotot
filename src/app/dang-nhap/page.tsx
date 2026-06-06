@@ -3,7 +3,7 @@
 import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Eye, EyeOff, Loader2, LogIn, MailCheck } from "lucide-react";
+import { Eye, EyeOff, Loader2, LogIn, MailCheck, ShieldOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { InAppBrowserWarning, useInAppBrowser } from "@/components/InAppBrowserWarning";
 
@@ -11,6 +11,7 @@ function DangNhapForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") ?? "/";
+  const authError  = searchParams.get("error");
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -64,7 +65,13 @@ function DangNhapForm() {
 
   return (
     <div className="w-full max-w-md">
-      {redirectTo !== "/" && (
+      {authError === "blocked" && (
+        <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4 flex items-center gap-2 text-sm text-red-700">
+          <ShieldOff size={16} className="shrink-0" />
+          Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên để được hỗ trợ.
+        </div>
+      )}
+      {redirectTo !== "/" && authError !== "blocked" && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-4 flex items-center gap-2 text-sm text-amber-700">
           <LogIn size={16} className="shrink-0" />
           Vui lòng đăng nhập để tiếp tục.

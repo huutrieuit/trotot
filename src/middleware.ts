@@ -56,19 +56,27 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Kiểm tra role admin — đọc từ bảng profiles (single source of truth)
+  // Kiểm tra blocked + role — một lần query duy nhất
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role, blocked")
+    .eq("user_id", session.user.id)
+    .single();
+
+  // Chặn user bị khóa khỏi mọi trang protected
+  if (profile?.blocked) {
+    await supabase.auth.signOut();
+    const loginUrl = new URL("/dang-nhap", request.url);
+    loginUrl.searchParams.set("error", "blocked");
+    return NextResponse.redirect(loginUrl);
+  }
+
   if (isAdminOnly(pathname)) {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("user_id", session.user.id)
-      .single();
     const role = profile?.role;
-    // /admin/users chỉ dành cho full admin
-    if (pathname.startsWith("/admin/users")) {
+    // /admin/users và /admin/nhan-vien chỉ dành cho full admin
+    if (pathname.startsWith("/admin/users") || pathname.startsWith("/admin/nhan-vien")) {
       if (role !== "admin") return NextResponse.redirect(new URL("/", request.url));
     } else {
-      // Còn lại: admin hoặc sub_admin đều được vào
       if (role !== "admin" && role !== "sub_admin") {
         return NextResponse.redirect(new URL("/", request.url));
       }
