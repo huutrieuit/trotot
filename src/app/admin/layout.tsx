@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ShieldCheck, LayoutDashboard, PlusSquare, ListChecks, Users, LayoutList, Zap, UserCog, PhoneOff } from "lucide-react";
+import { ShieldCheck, LayoutDashboard, PlusSquare, ListChecks, Users, LayoutList, Zap, UserCog, PhoneOff, Flag } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 
 const ALL_NAV = [
@@ -9,6 +9,7 @@ const ALL_NAV = [
   { href: "/admin/quan-ly-tin",    icon: LayoutList,      label: "Quản lý tin",     adminOnly: false },
   { href: "/admin/yeu-cau-credit", icon: Zap,             label: "Yêu cầu credit",  adminOnly: false },
   { href: "/admin/bao-cao-sdt",    icon: PhoneOff,        label: "Báo cáo SĐT",     adminOnly: false },
+  { href: "/admin/bao-cao-tin",    icon: Flag,            label: "Báo cáo tin",     adminOnly: false },
   { href: "/admin/nhan-vien",      icon: UserCog,         label: "Nhân viên",       adminOnly: true  },
   { href: "/admin/users",          icon: Users,           label: "Người dùng",      adminOnly: true  },
 ];
@@ -25,10 +26,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const [
     { count: pendingCredits },
-    { count: pendingReports },
+    { count: pendingPhoneReports },
+    { count: pendingListingReports },
   ] = await Promise.all([
     supabase.from("credit_requests").select("*", { count: "exact", head: true }).eq("status", "pending"),
     supabase.from("credit_reports").select("*", { count: "exact", head: true }).eq("status", "pending"),
+    supabase.from("listing_reports").select("*", { count: "exact", head: true }).eq("status", "pending"),
   ]);
 
   const nav = ALL_NAV.filter((item) => !item.adminOnly || isFullAdmin);
@@ -52,7 +55,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           {nav.map(({ href, icon: Icon, label }) => {
             const badge =
               (href === "/admin/yeu-cau-credit" && pendingCredits) ? pendingCredits :
-              (href === "/admin/bao-cao-sdt" && pendingReports) ? pendingReports :
+              (href === "/admin/bao-cao-sdt" && pendingPhoneReports) ? pendingPhoneReports :
+              (href === "/admin/bao-cao-tin" && pendingListingReports) ? pendingListingReports :
               null;
             return (
               <Link key={href} href={href}

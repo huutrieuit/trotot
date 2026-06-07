@@ -67,6 +67,32 @@ export async function sendNewListingNotification(params: {
   });
 }
 
+export async function sendListingReportNotification(params: {
+  userEmail: string;
+  listingId: string;
+  listingTitle: string;
+  listingUrl: string;
+  reason: string;
+  adminUrl: string;
+}) {
+  const time = new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
+
+  const body = `
+    <div class="row"><span class="label">Người báo cáo</span><span class="value">${params.userEmail}</span></div>
+    <div class="row"><span class="label">Lý do</span><span class="value" style="color:#dc2626">${params.reason}</span></div>
+    <div class="row"><span class="label">Tin đăng</span><span class="value"><a href="${params.listingUrl}" style="color:#2563eb">${params.listingTitle}</a></span></div>
+    <div class="row"><span class="label">Thời gian</span><span class="value">${time}</span></div>
+    <a href="${params.adminUrl}" class="btn">Xem báo cáo trong Admin →</a>
+  `;
+
+  await resend.emails.send({
+    from: FROM,
+    to: ADMIN_EMAIL,
+    subject: `[TrọTốt] Báo cáo tin giả: ${params.listingTitle}`,
+    html: layout("Có báo cáo tin giả mới", body),
+  });
+}
+
 export async function sendCreditRequestNotification(params: {
   userEmail: string;
   userId: string;

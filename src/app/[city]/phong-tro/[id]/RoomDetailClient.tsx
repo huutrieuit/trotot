@@ -6,10 +6,10 @@ import Link from "next/link";
 import {
   MapPin, Maximize2, Users, Wifi, AirVent, Car, ShieldCheck,
   ChevronLeft, Heart, Share2, X, Eye,
-  WashingMachine, UtensilsCrossed, Wind, PawPrint, BadgeCheck, Loader2,
+  WashingMachine, UtensilsCrossed, Wind, PawPrint, BadgeCheck, Loader2, Flag, AlertTriangle, CheckCircle2,
 } from "lucide-react";
 import { formatPrice, formatArea, cn } from "@/lib/utils";
-import { toggleSaveListing } from "@/app/actions/save";
+import { toggleSaveListing, reportListing } from "@/app/actions/save";
 import ImageGallery from "@/components/listings/ImageGallery";
 import PhoneReveal from "@/components/listings/PhoneReveal";
 import ListingCard from "@/components/listings/ListingCard";
@@ -53,12 +53,36 @@ export default function RoomDetailClient({ listing, related, citySlug, currentUs
   const [saved, setSaved] = useState(isSaved);
   const [savingHeart, setSavingHeart] = useState(false);
 
+  const REPORT_REASONS = [
+    "Tin giả / không có thật",
+    "Thông tin sai lệch",
+    "Giá không đúng thực tế",
+    "Tin trùng lặp",
+    "Chủ trọ lừa đảo",
+  ] as const;
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState<string>(REPORT_REASONS[0]);
+  const [reportStatus, setReportStatus] = useState<"idle" | "loading" | "success" | "duplicate">("idle");
+
   const handleToggleSave = async () => {
     if (!currentUserId) return;
     setSavingHeart(true);
     const { saved: next } = await toggleSaveListing(listing.id);
     setSaved(next);
     setSavingHeart(false);
+  };
+
+  const handleReport = async () => {
+    if (!currentUserId) { setReportOpen(false); return; }
+    setReportStatus("loading");
+    const result = await reportListing({
+      listingId: listing.id,
+      listingTitle: listing.title,
+      citySlug,
+      reason: reportReason,
+    });
+    if (result.error === "duplicate") { setReportStatus("duplicate"); return; }
+    setReportStatus(result.error ? "idle" : "success");
   };
 
   // Map – auto-geocode if lat/lng missing
@@ -245,6 +269,22 @@ export default function RoomDetailClient({ listing, related, citySlug, currentUs
               </div>
             </div>
 
+            {/* Nút báo cáo tin giả */}
+            <div className="pb-4 flex justify-center">
+              <button
+                onClick={() => {
+                  if (!currentUserId) return;
+                  setReportOpen(true);
+                  setReportStatus("idle");
+                  setReportReason(REPORT_REASONS[0]);
+                }}
+                className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-red-500 transition-colors"
+              >
+                <Flag size={13} />
+                {currentUserId ? "Báo cáo tin giả" : ""}
+              </button>
+            </div>
+
             {/* Related */}
             {related.length > 0 && (
               <div className="pb-6">
@@ -297,6 +337,69 @@ export default function RoomDetailClient({ listing, related, citySlug, currentUs
           Liên hệ ngay
         </button>
       </div>
+
+      {/* Modal báo cáo tin giả */}
+      {reportOpen && (
+        <>
+          <div className="fixed inset-0 z-50 bg-black/40" onClick={() => setReportOpen(false)} />
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl px-4 pt-4 pb-10">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Flag size={16} className="text-red-500" />
+                <span className="font-semibold text-sm">Báo cáo tin đăng</span>
+              </div>
+              <button onClick={() => setReportOpen(false)}><X size={20} className="text-gray-400" /></button>
+            </div>
+
+            {reportStatus === "success" ? (
+              <div className="flex flex-col items-center gap-3 py-6 text-center">
+                <CheckCircle2 size={32} className="text-green-500" />
+                <p className="font-semibold text-gray-800">Đã gửi báo cáo</p>
+                <p className="text-sm text-gray-500">Admin sẽ xem xét và xử lý trong thời gian sớm nhất.</p>
+                <button onClick={() => setReportOpen(false)} className="mt-2 text-sm text-blue-600 font-medium">Đóng</button>
+              </div>
+            ) : reportStatus === "duplicate" ? (
+              <div className="flex flex-col items-center gap-3 py-6 text-center">
+                <AlertTriangle size={32} className="text-orange-400" />
+                <p className="font-semibold text-gray-800">Bạn đã báo cáo tin này rồi</p>
+                <p className="text-sm text-gray-500">Admin đang xem xét báo cáo của bạn.</p>
+                <button onClick={() => setReportOpen(false)} className="mt-2 text-sm text-blue-600 font-medium">Đóng</button>
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-gray-600 mb-3">Chọn lý do báo cáo:</p>
+                <div className="space-y-2 mb-5">
+                  {REPORT_REASONS.map((r) => (
+                    <label key={r} className={cn(
+                      "flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-colors",
+                      reportReason === r ? "border-red-400 bg-red-50" : "border-gray-200 hover:bg-gray-50"
+                    )}>
+                      <input
+                        type="radio"
+                        name="report_reason"
+                        value={r}
+                        checked={reportReason === r}
+                        onChange={() => setReportReason(r)}
+                        className="accent-red-500"
+                      />
+                      <span className="text-sm text-gray-700">{r}</span>
+                    </label>
+                  ))}
+                </div>
+                <button
+                  onClick={handleReport}
+                  disabled={reportStatus === "loading"}
+                  className="w-full flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 disabled:opacity-60 text-white font-semibold py-3 rounded-xl text-sm transition-colors"
+                >
+                  {reportStatus === "loading"
+                    ? <><Loader2 size={15} className="animate-spin" /> Đang gửi...</>
+                    : <><Flag size={15} /> Gửi báo cáo</>}
+                </button>
+              </>
+            )}
+          </div>
+        </>
+      )}
 
       {/* Mobile contact sheet */}
       {contactOpen && (

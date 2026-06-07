@@ -196,6 +196,54 @@ export async function rejectPhoneReport(reportId: string): Promise<{ error?: str
   }
 }
 
+export async function dismissListingReport(reportId: string): Promise<{ error?: string }> {
+  try {
+    const supabase = await requireAnyAdmin();
+    const { error } = await supabase
+      .from("listing_reports")
+      .update({ status: "dismissed" })
+      .eq("id", reportId);
+    if (error) return { error: error.message };
+    revalidatePath("/admin/bao-cao-tin");
+    return {};
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Lỗi không xác định" };
+  }
+}
+
+export async function deleteListingFromReport(reportId: string, listingId: string): Promise<{ error?: string }> {
+  try {
+    const supabase = await requireAnyAdmin();
+
+    const { data: images } = await supabase
+      .from("listing_images")
+      .select("url")
+      .eq("listing_id", listingId);
+
+    if (images && images.length > 0) {
+      const paths = images.map((img) => {
+        try {
+          const url = new URL(img.url);
+          return decodeURIComponent(url.pathname.split("/listing-images/")[1] ?? "");
+        } catch { return ""; }
+      }).filter(Boolean);
+      if (paths.length > 0) {
+        await supabase.storage.from("listing-images").remove(paths);
+      }
+    }
+
+    // ON DELETE CASCADE sẽ xóa listing_reports khi xóa listing
+    const { error } = await supabase.from("listings").delete().eq("id", listingId);
+    if (error) return { error: error.message };
+
+    revalidatePath("/admin/bao-cao-tin");
+    revalidatePath("/admin/quan-ly-tin");
+    return {};
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Lỗi không xác định" };
+  }
+}
+
 export async function adjustCredits(userId: string, delta: number) {
   if (!Number.isInteger(delta) || delta === 0 || Math.abs(delta) > 1000) {
     throw new Error("Số credit không hợp lệ (1–1000).");
