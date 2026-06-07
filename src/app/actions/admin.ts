@@ -166,24 +166,34 @@ export async function demoteStaff(userId: string) {
   revalidatePath("/admin/nhan-vien");
 }
 
-export async function refundPhoneReport(reportId: string) {
-  const supabase = await requireAnyAdmin();
-  const { error } = await supabase.rpc("resolve_phone_report", {
-    p_report_id: reportId,
-    p_action: "refunded",
-  });
-  if (error) throw new Error(error.message);
-  revalidatePath("/admin/bao-cao-sdt");
+export async function refundPhoneReport(reportId: string): Promise<{ error?: string }> {
+  try {
+    const supabase = await requireAnyAdmin();
+    const { error } = await supabase.rpc("resolve_phone_report", {
+      p_report_id: reportId,
+      p_action: "refunded",
+    });
+    if (error) return { error: error.message };
+    revalidatePath("/admin/bao-cao-sdt");
+    return {};
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Lỗi không xác định" };
+  }
 }
 
-export async function rejectPhoneReport(reportId: string) {
-  const supabase = await requireAnyAdmin();
-  const { error } = await supabase.rpc("resolve_phone_report", {
-    p_report_id: reportId,
-    p_action: "rejected",
-  });
-  if (error) throw new Error(error.message);
-  revalidatePath("/admin/bao-cao-sdt");
+export async function rejectPhoneReport(reportId: string): Promise<{ error?: string }> {
+  try {
+    const supabase = await requireAnyAdmin();
+    const { error } = await supabase.rpc("resolve_phone_report", {
+      p_report_id: reportId,
+      p_action: "rejected",
+    });
+    if (error) return { error: error.message };
+    revalidatePath("/admin/bao-cao-sdt");
+    return {};
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Lỗi không xác định" };
+  }
 }
 
 export async function adjustCredits(userId: string, delta: number) {

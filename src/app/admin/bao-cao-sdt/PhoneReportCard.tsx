@@ -26,7 +26,8 @@ export default function PhoneReportCard({
 
   const handleRefund = () => {
     startTransition(async () => {
-      await refundPhoneReport(id);
+      const result = await refundPhoneReport(id);
+      if (result?.error) { alert(`Lỗi: ${result.error}`); return; }
       setDone("refunded");
     });
   };
@@ -34,7 +35,8 @@ export default function PhoneReportCard({
   const handleReject = () => {
     if (!confirm(`Từ chối báo cáo của ${reporterEmail}?`)) return;
     startTransition(async () => {
-      await rejectPhoneReport(id);
+      const result = await rejectPhoneReport(id);
+      if (result?.error) { alert(`Lỗi: ${result.error}`); return; }
       setDone("rejected");
     });
   };

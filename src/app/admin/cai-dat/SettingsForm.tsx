@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Save, Loader2, CheckCircle2, Upload, QrCode, Phone, CreditCard } from "lucide-react";
+import { Save, Loader2, CheckCircle2, Upload, QrCode, Phone, CreditCard, User } from "lucide-react";
 
 interface Props {
   defaultValues: Record<string, string>;
@@ -34,6 +34,12 @@ const DISPLAY_TOGGLES = [
     label: "Hiển thị chuyển khoản thủ công",
     description: "Hiển thị thông tin số tài khoản để chuyển khoản thủ công (không qua QR)",
     icon: CreditCard,
+  },
+  {
+    key: "show_landlord_info",
+    label: "Hiển thị thông tin chủ trọ (người đăng)",
+    description: "Hiển thị tên và thông tin người đăng trên trang chi tiết bài đăng",
+    icon: User,
   },
 ];
 

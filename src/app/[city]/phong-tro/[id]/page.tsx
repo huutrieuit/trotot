@@ -19,12 +19,14 @@ export default async function RoomDetailPage({ params }: Props) {
   ]);
   if (!listing) notFound();
 
-  const [related, { data: { user } }] = await Promise.all([
+  const [related, { data: { user } }, { data: settings }] = await Promise.all([
     getRelatedListings(citySlug, listing.district, id),
     supabase.auth.getUser(),
+    supabase.from("site_settings").select("key, value").eq("key", "show_landlord_info").single(),
   ]);
 
   const isVerified = listing.source === "admin" || listing.landlord?.verified_phone === true;
+  const showLandlordInfo = settings?.value !== "false";
 
   let isSaved = false;
   if (user) {
@@ -45,6 +47,7 @@ export default async function RoomDetailPage({ params }: Props) {
       currentUserId={user?.id ?? null}
       isSaved={isSaved}
       isVerified={isVerified}
+      showLandlordInfo={showLandlordInfo}
     />
   );
 }

@@ -43,9 +43,10 @@ interface Props {
   currentUserId: string | null;
   isSaved: boolean;
   isVerified: boolean;
+  showLandlordInfo: boolean;
 }
 
-export default function RoomDetailClient({ listing, related, citySlug, currentUserId, isSaved, isVerified }: Props) {
+export default function RoomDetailClient({ listing, related, citySlug, currentUserId, isSaved, isVerified, showLandlordInfo }: Props) {
   const base = `/${citySlug}`;
 
   const [contactOpen, setContactOpen] = useState(false);
@@ -208,7 +209,7 @@ export default function RoomDetailClient({ listing, related, citySlug, currentUs
 
             {/* Người đăng */}
             <div className="mb-5 bg-gray-50 rounded-2xl p-4">
-              {isAdminSource ? (
+              {showLandlordInfo && (isAdminSource ? (
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center shrink-0">
                     <span className="text-white text-sm font-bold">TT</span>
@@ -237,7 +238,7 @@ export default function RoomDetailClient({ listing, related, citySlug, currentUs
                     )}
                   </div>
                 </div>
-              )}
+              ))}
               <div className="flex items-center gap-1.5 mt-3 text-xs text-gray-400">
                 <Eye size={13} />
                 <span>{listing.view_count} lượt xem · {listing.contact_count} lượt liên hệ</span>
@@ -308,20 +309,22 @@ export default function RoomDetailClient({ listing, related, citySlug, currentUs
             </div>
 
             {/* Mini landlord info */}
-            <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-xl">
-              <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm shrink-0">
-                {isAdminSource ? "TT" : (listing.landlord?.full_name?.[0]?.toUpperCase() ?? "?")}
+            {showLandlordInfo && (
+              <div className="flex items-center gap-3 mb-4 p-3 bg-gray-50 rounded-xl">
+                <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold text-sm shrink-0">
+                  {isAdminSource ? "TT" : (listing.landlord?.full_name?.[0]?.toUpperCase() ?? "?")}
+                </div>
+                <div>
+                  <p className="font-medium text-sm">
+                    {isAdminSource ? "TrọTốt" : (listing.landlord?.full_name ?? "Chủ nhà")}
+                  </p>
+                  {isAdminSource
+                    ? <p className="text-xs text-blue-500 flex items-center gap-0.5"><BadgeCheck size={10} /> Đã xác thực</p>
+                    : listing.landlord?.verified_phone && <p className="text-xs text-green-600 flex items-center gap-0.5"><ShieldCheck size={10} /> SĐT xác minh</p>
+                  }
+                </div>
               </div>
-              <div>
-                <p className="font-medium text-sm">
-                  {isAdminSource ? "TrọTốt" : (listing.landlord?.full_name ?? "Chủ nhà")}
-                </p>
-                {isAdminSource
-                  ? <p className="text-xs text-blue-500 flex items-center gap-0.5"><BadgeCheck size={10} /> Đã xác thực</p>
-                  : listing.landlord?.verified_phone && <p className="text-xs text-green-600 flex items-center gap-0.5"><ShieldCheck size={10} /> SĐT xác minh</p>
-                }
-              </div>
-            </div>
+            )}
 
             <PhoneReveal {...phoneRevealProps} />
           </div>
