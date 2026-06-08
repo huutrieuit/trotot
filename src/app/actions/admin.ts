@@ -114,6 +114,12 @@ export async function blockUser(userId: string) {
   const { error } = await supabase
     .from("profiles").update({ blocked: true }).eq("user_id", userId);
   if (error) throw new Error(error.message);
+  // Ẩn tất cả tin đang active/pending của user bị khóa
+  await supabase
+    .from("listings")
+    .update({ status: "hidden" })
+    .eq("landlord_id", userId)
+    .in("status", ["active", "pending"]);
   // Ban ở tầng auth để vô hiệu hoá session ngay lập tức
   try {
     const admin = createAdminClient();
@@ -121,6 +127,7 @@ export async function blockUser(userId: string) {
   } catch { /* service role chưa cấu hình — chỉ block ở tầng app */ }
   revalidatePath("/admin/users");
   revalidatePath("/admin/nhan-vien");
+  revalidatePath("/admin/quan-ly-tin");
 }
 
 export async function unblockUser(userId: string) {
@@ -137,10 +144,36 @@ export async function unblockUser(userId: string) {
 }
 
 export async function deleteUser(userId: string): Promise<{ error?: string }> {
+  let supabase: Awaited<ReturnType<typeof requireAdmin>>;
   try {
-    await requireAdmin();
+    supabase = await requireAdmin();
   } catch {
     return { error: "Không có quyền thực hiện thao tác này." };
+  }
+  // Lấy listing IDs của user để xóa ảnh storage
+  const { data: userListings } = await supabase
+    .from("listings")
+    .select("id")
+    .eq("landlord_id", userId);
+  const listingIds = (userListings ?? []).map((l) => l.id);
+  if (listingIds.length > 0) {
+    const { data: images } = await supabase
+      .from("listing_images")
+      .select("url")
+      .in("listing_id", listingIds);
+    if (images && images.length > 0) {
+      const paths = images.map((img) => {
+        try {
+          const url = new URL(img.url);
+          return decodeURIComponent(url.pathname.split("/listing-images/")[1] ?? "");
+        } catch { return ""; }
+      }).filter(Boolean);
+      if (paths.length > 0) {
+        await supabase.storage.from("listing-images").remove(paths);
+      }
+    }
+    // Xóa listings (ON DELETE CASCADE xóa listing_images, saved_listings, reports...)
+    await supabase.from("listings").delete().in("id", listingIds);
   }
   try {
     const admin = createAdminClient();
@@ -155,6 +188,7 @@ export async function deleteUser(userId: string): Promise<{ error?: string }> {
   }
   revalidatePath("/admin/users");
   revalidatePath("/admin/nhan-vien");
+  revalidatePath("/admin/quan-ly-tin");
   return {};
 }
 
