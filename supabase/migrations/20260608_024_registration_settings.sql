@@ -1,4 +1,4 @@
--- Thêm setting kiểm soát xác nhận email khi đăng ký
+-- Thêm setting kiểm soát phương thức đăng ký
 INSERT INTO public.site_settings (key, value) VALUES
-  ('require_email_confirm', 'true')
+  ('registration_sso_only', 'false')
 ON CONFLICT (key) DO NOTHING;

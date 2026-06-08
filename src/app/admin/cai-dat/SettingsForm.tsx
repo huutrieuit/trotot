@@ -45,11 +45,10 @@ const DISPLAY_TOGGLES = [
 
 const REGISTRATION_TOGGLES = [
   {
-    key: "require_email_confirm",
-    label: "Yêu cầu xác nhận email khi đăng ký",
-    description: "Tắt để user đăng ký xong dùng được ngay (không cần bấm link email). Hữu ích khi bị rate limit hoặc đang test.",
+    key: "registration_sso_only",
+    label: "Chỉ cho đăng ký bằng Google (SSO)",
+    description: "Bật để ẩn form email/mật khẩu trên trang đăng ký — chỉ còn nút Đăng ký bằng Google.",
     icon: MailCheck,
-    danger: true,
   },
 ];
 
@@ -217,8 +216,8 @@ export default function SettingsForm({ defaultValues }: Props) {
           <h2 className="font-semibold text-gray-800 mb-1">Đăng ký tài khoản</h2>
           <p className="text-xs text-gray-400">Kiểm soát luồng đăng ký người dùng mới.</p>
         </div>
-        {REGISTRATION_TOGGLES.map(({ key, label, description, icon: Icon, danger }) => {
-          const enabled = values[key] !== "false";
+        {REGISTRATION_TOGGLES.map(({ key, label, description, icon: Icon }) => {
+          const enabled = values[key] === "true";
           return (
             <div key={key} className="flex items-center justify-between gap-4">
               <div className="flex items-start gap-2.5">
@@ -226,11 +225,6 @@ export default function SettingsForm({ defaultValues }: Props) {
                 <div>
                   <p className="text-sm font-medium text-gray-700">{label}</p>
                   <p className="text-xs text-gray-400 mt-0.5">{description}</p>
-                  {danger && !enabled && (
-                    <p className="text-[11px] text-amber-600 font-medium mt-1">
-                      Đang tắt — user đăng ký xong có thể đăng nhập ngay
-                    </p>
-                  )}
                 </div>
               </div>
               <button
