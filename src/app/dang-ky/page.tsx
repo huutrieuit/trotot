@@ -2,16 +2,19 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff, Home, Building2, Loader2, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { InAppBrowserWarning, useInAppBrowser } from "@/components/InAppBrowserWarning";
+import { registerUser } from "@/app/actions/auth";
 
 type Role = "tenant" | "landlord";
 
 const PENDING_REF_KEY = "trotot_pending_ref";
 
 export default function DangKyPage() {
+  const router = useRouter();
   const [role, setRole] = useState<Role>("tenant");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
@@ -42,35 +45,27 @@ export default function DangKyPage() {
     }
 
     setLoading(true);
-    const supabase = createClient();
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email: form.email,
-      password: form.password,
-      options: {
-        data: { full_name: form.fullName, role },
-      },
-    });
+    const result = await registerUser(form.email, form.password, form.fullName, role);
     setLoading(false);
-    if (signUpError) {
-      const msg = signUpError.message.toLowerCase();
-      if (msg.includes("already registered") || msg.includes("already been registered") || msg.includes("already exists")) {
-        setError("Email này đã được đăng ký rồi. Hãy đăng nhập hoặc dùng email khác.");
-      } else if (msg.includes("invalid email")) {
-        setError("Email không hợp lệ.");
-      } else if (msg.includes("password")) {
-        setError("Mật khẩu không hợp lệ.");
-      } else {
-        setError(signUpError.message);
-      }
-      return;
-    }
-    // Supabase bật "email enumeration protection": email đã tồn tại → trả error=null
-    // nhưng identities rỗng. Phải kiểm tra thêm để tránh hiển thị "thành công" giả.
-    if (!signUpData.user || signUpData.user.identities?.length === 0) {
+
+    if (result.type === "already_registered") {
       setError("Email này đã được đăng ký rồi. Hãy đăng nhập hoặc dùng email khác.");
       return;
     }
+    if (result.type === "error") {
+      setError(result.message);
+      return;
+    }
     if (pendingRef) localStorage.setItem(PENDING_REF_KEY, pendingRef);
+    if (result.type === "instant") {
+      // Không cần xác nhận email → đăng nhập ngay
+      const supabase = createClient();
+      await supabase.auth.signInWithPassword({ email: form.email, password: form.password });
+      router.push("/");
+      router.refresh();
+      return;
+    }
+    // type === "email_sent"
     setDone(true);
   };
 

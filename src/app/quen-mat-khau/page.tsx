@@ -21,7 +21,15 @@ export default function QuenMatKhauPage() {
     const redirectTo = `${window.location.origin}/auth/callback?next=/dat-lai-mat-khau`;
     const { error: err } = await supabase.auth.resetPasswordForEmail(email, { redirectTo });
     setLoading(false);
-    if (err) { setError(err.message); return; }
+    if (err) {
+      const msg = err.message.toLowerCase();
+      if (msg.includes("rate limit") || msg.includes("over_email_send_rate_limit") || msg.includes("email rate")) {
+        setError("Hệ thống đang gửi quá nhiều email. Vui lòng thử lại sau vài phút.");
+      } else {
+        setError(err.message);
+      }
+      return;
+    }
     setSent(true);
   };
 

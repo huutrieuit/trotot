@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Save, Loader2, CheckCircle2, Upload, QrCode, Phone, CreditCard, User } from "lucide-react";
+import { Save, Loader2, CheckCircle2, Upload, QrCode, Phone, CreditCard, User, MailCheck } from "lucide-react";
 
 interface Props {
   defaultValues: Record<string, string>;
@@ -43,6 +43,16 @@ const DISPLAY_TOGGLES = [
   },
 ];
 
+const REGISTRATION_TOGGLES = [
+  {
+    key: "require_email_confirm",
+    label: "Yêu cầu xác nhận email khi đăng ký",
+    description: "Tắt để user đăng ký xong dùng được ngay (không cần bấm link email). Hữu ích khi bị rate limit hoặc đang test.",
+    icon: MailCheck,
+    danger: true,
+  },
+];
+
 export default function SettingsForm({ defaultValues }: Props) {
   const [values, setValues] = useState<Record<string, string>>(defaultValues);
   const [saving, setSaving] = useState(false);
@@ -55,6 +65,7 @@ export default function SettingsForm({ defaultValues }: Props) {
     ...BANK_FIELDS.map((f) => f.key),
     ...QR_PACKAGES.map((p) => p.key),
     ...DISPLAY_TOGGLES.map((t) => t.key),
+    ...REGISTRATION_TOGGLES.map((t) => t.key),
   ];
 
   const handleSave = async () => {
@@ -192,6 +203,40 @@ export default function SettingsForm({ defaultValues }: Props) {
                 type="button"
                 onClick={() => setValues((v) => ({ ...v, [key]: enabled ? "false" : "true" }))}
                 className={`relative shrink-0 w-11 h-6 rounded-full transition-colors ${enabled ? "bg-orange-500" : "bg-gray-200"}`}
+              >
+                <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${enabled ? "translate-x-6" : "translate-x-1"}`} />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Registration settings */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+        <div>
+          <h2 className="font-semibold text-gray-800 mb-1">Đăng ký tài khoản</h2>
+          <p className="text-xs text-gray-400">Kiểm soát luồng đăng ký người dùng mới.</p>
+        </div>
+        {REGISTRATION_TOGGLES.map(({ key, label, description, icon: Icon, danger }) => {
+          const enabled = values[key] !== "false";
+          return (
+            <div key={key} className="flex items-center justify-between gap-4">
+              <div className="flex items-start gap-2.5">
+                <Icon size={15} className={`mt-0.5 shrink-0 ${enabled ? "text-blue-500" : "text-gray-400"}`} />
+                <div>
+                  <p className="text-sm font-medium text-gray-700">{label}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{description}</p>
+                  {danger && !enabled && (
+                    <p className="text-[11px] text-amber-600 font-medium mt-1">
+                      Đang tắt — user đăng ký xong có thể đăng nhập ngay
+                    </p>
+                  )}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setValues((v) => ({ ...v, [key]: enabled ? "false" : "true" }))}
+                className={`relative shrink-0 w-11 h-6 rounded-full transition-colors ${enabled ? "bg-blue-500" : "bg-gray-200"}`}
               >
                 <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${enabled ? "translate-x-6" : "translate-x-1"}`} />
               </button>
