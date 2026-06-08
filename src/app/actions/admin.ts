@@ -177,8 +177,9 @@ export async function deleteUser(userId: string): Promise<{ error?: string }> {
   }
   try {
     const admin = createAdminClient();
-    const { error } = await admin.auth.admin.deleteUser(userId);
-    if (error) return { error: error.message };
+    // shouldSoftDelete = false → hard delete, giải phóng email ngay lập tức
+    const { error } = await admin.auth.admin.deleteUser(userId, false);
+    if (error) return { error: `Xóa auth thất bại: ${error.message}` };
   } catch (e) {
     const msg = e instanceof Error ? e.message : "";
     if (msg === "SUPABASE_SERVICE_ROLE_KEY_MISSING") {
