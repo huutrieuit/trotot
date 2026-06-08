@@ -72,8 +72,9 @@ export default async function UserDetailPage({ params }: Props) {
       : Promise.resolve({ data: [] }),
   ]);
 
-  // Login method từ service role
+  // Login method + email fallback từ service role
   let loginProvider: string | null = null;
+  let authEmail: string | null = null;
   try {
     const admin = createAdminClient();
     const { data } = await admin.auth.admin.getUserById(id);
@@ -81,9 +82,11 @@ export default async function UserDetailPage({ params }: Props) {
     loginProvider = identities.map((i: { provider: string }) =>
       i.provider === "google" ? "Google" : "Email / Mật khẩu"
     ).join(", ") || null;
+    authEmail = data?.user?.email ?? null;
   } catch { /* service role không khả dụng */ }
 
-  const displayName = profile.full_name || profile.email || "Chưa đặt tên";
+  const email = profile.email || authEmail;
+  const displayName = profile.full_name || email || "Chưa đặt tên";
   const initial = displayName[0].toUpperCase();
   const roleCfg = ROLE_LABEL[profile.role] ?? ROLE_LABEL.tenant;
   const isMe = id === me.id;
@@ -122,7 +125,7 @@ export default async function UserDetailPage({ params }: Props) {
                 {roleCfg.label}
               </span>
             </div>
-            <p className="text-sm text-gray-500">{profile.email || "—"}</p>
+            <p className="text-sm text-gray-500">{email || "—"}</p>
           </div>
         </div>
       </div>
@@ -136,7 +139,7 @@ export default async function UserDetailPage({ params }: Props) {
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Thông tin tài khoản</p>
             <div className="space-y-3">
               {[
-                { icon: Mail,     label: "Email",             value: profile.email || "—" },
+                { icon: Mail,     label: "Email",             value: email || "—" },
                 { icon: Phone,    label: "Số điện thoại",     value: profile.phone || "—" },
                 { icon: Calendar, label: "Ngày tham gia",     value: joinedDate },
                 ...(loginProvider ? [{ icon: KeyRound, label: "Đăng nhập bằng", value: loginProvider }] : []),
