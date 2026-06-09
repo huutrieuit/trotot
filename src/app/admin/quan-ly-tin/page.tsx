@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { LayoutList, MapPin, Clock } from "lucide-react";
+import { LayoutList, MapPin, Clock, Pencil } from "lucide-react";
+import Link from "next/link";
 import DeleteButton from "./DeleteButton";
 import { formatPrice } from "@/lib/utils";
 
@@ -123,7 +124,17 @@ export default async function QuanLyTinPage({ searchParams }: { searchParams: Pr
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <DeleteButton listingId={listing.id} />
+                        <div className="flex items-center gap-3">
+                          <Link
+                            href={`/admin/quan-ly-tin/${listing.id}/sua`}
+                            className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 font-medium transition-colors"
+                            title="Sửa tin"
+                          >
+                            <Pencil size={13} />
+                            Sửa
+                          </Link>
+                          <DeleteButton listingId={listing.id} />
+                        </div>
                       </td>
                     </tr>
                   );
