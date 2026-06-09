@@ -9,10 +9,14 @@ import {
   Wifi, AirVent, Car, ShieldCheck, WashingMachine,
   UtensilsCrossed, Wind, PawPrint,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { getCityConfig } from "@/config/cities";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import type { Amenities } from "@/types";
+import AddressSearch from "@/components/listings/AddressSearch";
+
+const LeafletMap = dynamic(() => import("@/components/map/LeafletMap"), { ssr: false });
 
 const AMENITY_LIST: { key: keyof Amenities; icon: React.ElementType; label: string }[] = [
   { key: "wifi",     icon: Wifi,            label: "Wifi" },
@@ -44,6 +48,7 @@ export default function AdminSuaTinPage() {
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
   const [districts, setDistricts] = useState<string[]>([]);
+  const [cityName, setCityName] = useState("");
 
   const [title, setTitle]               = useState("");
   const [address, setAddress]           = useState("");
@@ -57,6 +62,8 @@ export default function AdminSuaTinPage() {
   const [description, setDescription]   = useState("");
   const [amenities, setAmenities]       = useState<Partial<Amenities>>({});
   const [status, setStatus]             = useState("pending");
+  const [lat, setLat] = useState(0);
+  const [lng, setLng] = useState(0);
 
   const [existingImages, setExistingImages]   = useState<ExistingImage[]>([]);
   const [removedImageIds, setRemovedImageIds] = useState<string[]>([]);
@@ -86,6 +93,9 @@ export default function AdminSuaTinPage() {
         setStatus(data.status ?? "pending");
         const cityConfig = getCityConfig(data.city);
         setDistricts(cityConfig?.districts ?? []);
+        setCityName(cityConfig?.name ?? "");
+        setLat(data.lat ?? 0);
+        setLng(data.lng ?? 0);
         const imgs = ((data.listing_images ?? []) as ExistingImage[]).sort((a, b) => a.order - b.order);
         setExistingImages(imgs);
         setLoading(false);
@@ -137,6 +147,8 @@ export default function AdminSuaTinPage() {
           description: description.trim(),
           contact_phone: contactPhone.trim(),
           contact_phone2: contactPhone2.trim() || null,
+          lat: lat || null,
+          lng: lng || null,
           amenities: {
             wifi: !!amenities.wifi, ac: !!amenities.ac, washer: !!amenities.washer,
             parking: !!amenities.parking, security: !!amenities.security,
@@ -257,8 +269,38 @@ export default function AdminSuaTinPage() {
 
           <div>
             <label className="text-xs font-medium text-gray-600 mb-1 block">Địa chỉ *</label>
-            <input value={address} onChange={(e) => setAddress(e.target.value)} className={inputCls} />
+            {cityName ? (
+              <AddressSearch
+                cityName={cityName}
+                districts={districts}
+                value={address}
+                onChange={(val) => setAddress(val)}
+                onSelect={(addr, dist, latVal, lngVal) => {
+                  setAddress(addr);
+                  setDistrict(dist);
+                  setLat(latVal);
+                  setLng(lngVal);
+                }}
+              />
+            ) : (
+              <input value={address} onChange={(e) => setAddress(e.target.value)} className={inputCls} />
+            )}
           </div>
+
+          {lat !== 0 && lng !== 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-xs font-semibold text-gray-500">Xác nhận vị trí trên bản đồ</p>
+                <p className="text-[11px] text-blue-500">Kéo ghim để chỉnh chính xác</p>
+              </div>
+              <LeafletMap
+                lat={lat} lng={lng} address={address}
+                className="h-52"
+                draggable
+                onPositionChange={(la, ln) => { setLat(la); setLng(ln); }}
+              />
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>

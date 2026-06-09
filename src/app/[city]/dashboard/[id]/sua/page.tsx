@@ -10,10 +10,14 @@ import {
   UtensilsCrossed, Wind, PawPrint,
 } from "lucide-react";
 import { notFound } from "next/navigation";
+import dynamic from "next/dynamic";
 import { getCityConfig } from "@/config/cities";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import type { Amenities } from "@/types";
+import AddressSearch from "@/components/listings/AddressSearch";
+
+const LeafletMap = dynamic(() => import("@/components/map/LeafletMap"), { ssr: false });
 
 const AMENITY_LIST: { key: keyof Amenities; icon: React.ElementType; label: string }[] = [
   { key: "wifi", icon: Wifi, label: "Wifi" },
@@ -46,6 +50,8 @@ export default function SuaTinPage() {
   const [address, setAddress] = useState("");
   const [district, setDistrict] = useState("");
   const [area, setArea] = useState("");
+  const [lat, setLat] = useState(0);
+  const [lng, setLng] = useState(0);
   const [price, setPrice] = useState("");
   const [maxOccupants, setMaxOccupants] = useState("1");
   const [genderPref, setGenderPref] = useState<"all" | "male" | "female">("all");
@@ -73,7 +79,9 @@ export default function SuaTinPage() {
         setTitle(data.title);
         setAddress(data.address);
         setDistrict(data.district);
-        setArea(String(data.area));
+        setArea(data.area != null ? String(data.area) : "");
+        setLat(data.lat ?? 0);
+        setLng(data.lng ?? 0);
         setPrice(String(data.price));
         setMaxOccupants(String(data.max_occupants));
         setGenderPref(data.gender_preference);
@@ -127,8 +135,10 @@ export default function SuaTinPage() {
           title: title.trim(),
           address: address.trim(),
           district,
-          area: parseInt(area, 10),
+          area: area ? parseInt(area, 10) : null,
           price: parseInt(price.replace(/\D/g, ""), 10),
+          lat: lat || null,
+          lng: lng || null,
           max_occupants: parseInt(maxOccupants, 10),
           gender_preference: genderPref,
           description: description.trim(),
@@ -252,9 +262,34 @@ export default function SuaTinPage() {
 
           <div>
             <label className="text-xs font-medium text-gray-600 mb-1 block">Địa chỉ *</label>
-            <input value={address} onChange={(e) => setAddress(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
+            <AddressSearch
+              cityName={city.name}
+              districts={city.districts}
+              value={address}
+              onChange={(val) => setAddress(val)}
+              onSelect={(addr, dist, latVal, lngVal) => {
+                setAddress(addr);
+                setDistrict(dist);
+                setLat(latVal);
+                setLng(lngVal);
+              }}
+            />
           </div>
+
+          {lat !== 0 && lng !== 0 && (
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-xs font-semibold text-gray-500">Xác nhận vị trí trên bản đồ</p>
+                <p className="text-[11px] text-blue-500">Kéo ghim để chỉnh chính xác</p>
+              </div>
+              <LeafletMap
+                lat={lat} lng={lng} address={address}
+                className="h-52"
+                draggable
+                onPositionChange={(la, ln) => { setLat(la); setLng(ln); }}
+              />
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>

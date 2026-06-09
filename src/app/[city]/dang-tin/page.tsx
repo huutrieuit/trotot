@@ -426,8 +426,16 @@ export default function DangTinPage() {
 
             {lat !== 0 && lng !== 0 && (
               <div>
-                <p className="text-xs font-semibold text-gray-500 mb-1.5">Xem vị trí trên bản đồ</p>
-                <LeafletMap lat={lat} lng={lng} address={form.address} className="h-44" />
+                <div className="flex items-center justify-between mb-1.5">
+                  <p className="text-xs font-semibold text-gray-500">Xác nhận vị trí trên bản đồ</p>
+                  <p className="text-[11px] text-blue-500">Kéo ghim để chỉnh chính xác</p>
+                </div>
+                <LeafletMap
+                  lat={lat} lng={lng} address={form.address}
+                  className="h-52"
+                  draggable
+                  onPositionChange={(la, ln) => { setLat(la); setLng(ln); }}
+                />
               </div>
             )}
 
