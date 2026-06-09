@@ -94,8 +94,8 @@ export default function AdminSuaTinPage() {
         const cityConfig = getCityConfig(data.city);
         setDistricts(cityConfig?.districts ?? []);
         setCityName(cityConfig?.name ?? "");
-        setLat(data.lat ?? 0);
-        setLng(data.lng ?? 0);
+        setLat(data.lat || cityConfig?.center.lat || 0);
+        setLng(data.lng || cityConfig?.center.lng || 0);
         const imgs = ((data.listing_images ?? []) as ExistingImage[]).sort((a, b) => a.order - b.order);
         setExistingImages(imgs);
         setLoading(false);
@@ -269,38 +269,34 @@ export default function AdminSuaTinPage() {
 
           <div>
             <label className="text-xs font-medium text-gray-600 mb-1 block">Địa chỉ *</label>
-            {cityName ? (
-              <AddressSearch
-                cityName={cityName}
-                districts={districts}
-                value={address}
-                onChange={(val) => setAddress(val)}
-                onSelect={(addr, dist, latVal, lngVal) => {
-                  setAddress(addr);
-                  setDistrict(dist);
-                  setLat(latVal);
-                  setLng(lngVal);
-                }}
-              />
-            ) : (
-              <input value={address} onChange={(e) => setAddress(e.target.value)} className={inputCls} />
-            )}
+            <input value={address} onChange={(e) => setAddress(e.target.value)} className={inputCls} />
           </div>
 
-          {lat !== 0 && lng !== 0 && (
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <p className="text-xs font-semibold text-gray-500">Xác nhận vị trí trên bản đồ</p>
-                <p className="text-[11px] text-blue-500">Kéo ghim để chỉnh chính xác</p>
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-gray-500">Vị trí trên bản đồ</p>
+            <LeafletMap
+              lat={lat} lng={lng} address={address}
+              className="h-52"
+              draggable
+              onPositionChange={(la, ln) => { setLat(la); setLng(ln); }}
+            />
+            {cityName && (
+              <div>
+                <p className="text-[11px] text-gray-400 mb-1">Tìm lại địa chỉ để cập nhật ghim:</p>
+                <AddressSearch
+                  cityName={cityName}
+                  districts={districts}
+                  onChange={() => {}}
+                  onSelect={(addr, dist, latVal, lngVal) => {
+                    setAddress(addr);
+                    if (dist) setDistrict(dist);
+                    setLat(latVal);
+                    setLng(lngVal);
+                  }}
+                />
               </div>
-              <LeafletMap
-                lat={lat} lng={lng} address={address}
-                className="h-52"
-                draggable
-                onPositionChange={(la, ln) => { setLat(la); setLng(ln); }}
-              />
-            </div>
-          )}
+            )}
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>

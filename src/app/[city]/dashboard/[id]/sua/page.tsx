@@ -80,8 +80,8 @@ export default function SuaTinPage() {
         setAddress(data.address);
         setDistrict(data.district);
         setArea(data.area != null ? String(data.area) : "");
-        setLat(data.lat ?? 0);
-        setLng(data.lng ?? 0);
+        setLat(data.lat || city.center.lat);
+        setLng(data.lng || city.center.lng);
         setPrice(String(data.price));
         setMaxOccupants(String(data.max_occupants));
         setGenderPref(data.gender_preference);
@@ -262,34 +262,33 @@ export default function SuaTinPage() {
 
           <div>
             <label className="text-xs font-medium text-gray-600 mb-1 block">Địa chỉ *</label>
-            <AddressSearch
-              cityName={city.name}
-              districts={city.districts}
-              value={address}
-              onChange={(val) => setAddress(val)}
-              onSelect={(addr, dist, latVal, lngVal) => {
-                setAddress(addr);
-                setDistrict(dist);
-                setLat(latVal);
-                setLng(lngVal);
-              }}
-            />
+            <input value={address} onChange={(e) => setAddress(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
           </div>
 
-          {lat !== 0 && lng !== 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-gray-500">Vị trí trên bản đồ</p>
+            <LeafletMap
+              lat={lat} lng={lng} address={address}
+              className="h-52"
+              draggable
+              onPositionChange={(la, ln) => { setLat(la); setLng(ln); }}
+            />
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <p className="text-xs font-semibold text-gray-500">Xác nhận vị trí trên bản đồ</p>
-                <p className="text-[11px] text-blue-500">Kéo ghim để chỉnh chính xác</p>
-              </div>
-              <LeafletMap
-                lat={lat} lng={lng} address={address}
-                className="h-52"
-                draggable
-                onPositionChange={(la, ln) => { setLat(la); setLng(ln); }}
+              <p className="text-[11px] text-gray-400 mb-1">Tìm lại địa chỉ để cập nhật ghim:</p>
+              <AddressSearch
+                cityName={city.name}
+                districts={city.districts}
+                onChange={() => {}}
+                onSelect={(addr, dist, latVal, lngVal) => {
+                  setAddress(addr);
+                  if (dist) setDistrict(dist);
+                  setLat(latVal);
+                  setLng(lngVal);
+                }}
               />
             </div>
-          )}
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
