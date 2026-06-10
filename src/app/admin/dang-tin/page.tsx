@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import {
   Home, Building2, House, Hotel, Check, ImagePlus, X,
   Wifi, AirVent, Car, ShieldCheck, WashingMachine,
@@ -12,6 +13,9 @@ import { getAllCities } from "@/config/cities";
 import { cn } from "@/lib/utils";
 import type { RoomType, Amenities, ListingSource } from "@/types";
 import { createClient } from "@/lib/supabase/client";
+import AddressSearch from "@/components/listings/AddressSearch";
+
+const LeafletMap = dynamic(() => import("@/components/map/LeafletMap"), { ssr: false });
 
 /* ─── Types ─── */
 interface AdminForm {
@@ -91,6 +95,8 @@ export default function AdminDangTinPage() {
   const [previews, setPreviews] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [lat, setLat] = useState(0);
+  const [lng, setLng] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
   const cities = getAllCities().filter((c) => c.available);
   const selectedCity = cities.find((c) => c.slug === form.city);
@@ -134,6 +140,8 @@ export default function AdminDangTinPage() {
           description: form.description.trim(),
           address: form.address.trim(),
           district: form.district,
+          lat: lat || 0,
+          lng: lng || 0,
           price: parseInt(form.price, 10),
           area: parseInt(form.area, 10),
           room_type: form.room_type,
@@ -204,7 +212,7 @@ export default function AdminDangTinPage() {
           Tin sẽ hiển thị ngay sau khi admin duyệt.
         </p>
         <div className="flex gap-3 justify-center">
-          <button onClick={() => { setForm(INITIAL); setPreviews([]); setSuccess(false); }}
+          <button onClick={() => { setForm(INITIAL); setPreviews([]); setSuccess(false); setLat(0); setLng(0); }}
             className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-colors text-sm">
             Đăng tin mới
           </button>
@@ -279,7 +287,7 @@ export default function AdminDangTinPage() {
         <Section title="Vị trí" icon={Home}>
           <div className="grid grid-cols-2 gap-3 mb-3">
             <Field label="Thành phố *">
-              <select value={form.city} onChange={(e) => { set("city", e.target.value); set("district", ""); }} className={inputCls}>
+              <select value={form.city} onChange={(e) => { set("city", e.target.value); set("district", ""); setLat(0); setLng(0); }} className={inputCls}>
                 {cities.map((c) => <option key={c.slug} value={c.slug}>{c.name}</option>)}
               </select>
             </Field>
@@ -290,11 +298,34 @@ export default function AdminDangTinPage() {
               </select>
             </Field>
           </div>
-          <Field label="Địa chỉ chi tiết *">
-            <input type="text" required value={form.address}
-              onChange={(e) => set("address", e.target.value)}
-              placeholder="Số nhà, tên đường..." className={inputCls} />
+          <Field label="Địa chỉ chi tiết *" hint="Gõ để tìm gợi ý tự động">
+            <AddressSearch
+              cityName={selectedCity?.name ?? "Đà Nẵng"}
+              districts={selectedCity?.districts ?? []}
+              value={form.address}
+              onChange={(val) => set("address", val)}
+              onSelect={(addr, dist, latVal, lngVal) => {
+                set("address", addr);
+                if (dist) set("district", dist);
+                setLat(latVal);
+                setLng(lngVal);
+              }}
+            />
           </Field>
+          {lat !== 0 && lng !== 0 && (
+            <div className="mt-3">
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-xs font-semibold text-gray-500">Xác nhận vị trí trên bản đồ</p>
+                <p className="text-[11px] text-blue-500">Kéo ghim để chỉnh chính xác</p>
+              </div>
+              <LeafletMap
+                lat={lat} lng={lng} address={form.address}
+                className="h-52"
+                draggable
+                onPositionChange={(la, ln) => { setLat(la); setLng(ln); }}
+              />
+            </div>
+          )}
         </Section>
 
         {/* ── Thông tin phòng ── */}
