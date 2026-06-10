@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { ShieldCheck, LayoutDashboard, PlusSquare, ListChecks, Users, LayoutList, Zap, UserCog, PhoneOff, Flag } from "lucide-react";
+import { ShieldCheck, LayoutDashboard, PlusSquare, ListChecks, Users, LayoutList, Zap, UserCog, PhoneOff, Flag, BarChart2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 
 const ALL_NAV = [
   { href: "/admin",                icon: LayoutDashboard, label: "Tổng quan",      adminOnly: false },
+  { href: "/admin/thong-ke",       icon: BarChart2,       label: "Thống kê",        adminOnly: false },
   { href: "/admin/dang-tin",       icon: PlusSquare,      label: "Đăng tin",        adminOnly: false },
   { href: "/admin/duyet-tin",      icon: ListChecks,      label: "Duyệt tin",       adminOnly: false },
   { href: "/admin/quan-ly-tin",    icon: LayoutList,      label: "Quản lý tin",     adminOnly: false },

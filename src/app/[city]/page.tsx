@@ -3,6 +3,7 @@ import { Search, MapPin, ShieldCheck, Zap, Star, ChevronRight, Home, Building2, 
 import { notFound } from "next/navigation";
 import { getCityConfig } from "@/config/cities";
 import ListingCard from "@/components/listings/ListingCard";
+import PageTracker from "@/components/analytics/PageTracker";
 import { getListingsByCity, getSiteStats } from "@/lib/db/listings";
 
 interface Props {
@@ -43,6 +44,7 @@ export default async function CityPage({ params }: Props) {
 
   return (
     <div>
+      <PageTracker path={`/${citySlug}`} />
       {/* ── Hero ── */}
       <section className="relative bg-gradient-to-br from-[#0e2a6e] via-blue-700 to-blue-600 text-white overflow-hidden">
         <div aria-hidden="true" className="absolute top-0 right-0 w-[450px] h-[450px] rounded-full bg-blue-500/20 blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none" />

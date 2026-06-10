@@ -14,6 +14,7 @@ import ImageGallery from "@/components/listings/ImageGallery";
 import PhoneReveal from "@/components/listings/PhoneReveal";
 import ListingCard from "@/components/listings/ListingCard";
 import ClaimBanner from "@/components/listings/ClaimBanner";
+import PageTracker from "@/components/analytics/PageTracker";
 import type { Listing } from "@/types";
 
 const LeafletMap = dynamic(() => import("@/components/map/LeafletMap"), { ssr: false });
@@ -122,6 +123,7 @@ export default function RoomDetailClient({ listing, related, citySlug, currentUs
 
   return (
     <div className="max-w-5xl mx-auto">
+      <PageTracker path={`/${citySlug}/phong-tro/${listing.id}`} listingId={listing.id} />
       {/* Back bar (mobile) */}
       <div className="sticky top-14 z-30 flex items-center gap-2 px-4 py-2 bg-white/90 backdrop-blur-sm border-b border-gray-100 md:hidden">
         <Link href={`${base}/tim-phong`} className="p-1.5 -ml-1 text-gray-600">
