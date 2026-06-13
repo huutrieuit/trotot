@@ -349,8 +349,8 @@ export default function AdminDangTinPage() {
           </Field>
 
           <div className="grid grid-cols-3 gap-3 mt-3">
-            <Field label="Diện tích (m²) *">
-              <input type="number" required value={form.area}
+            <Field label="Diện tích (m²)">
+              <input type="number" value={form.area}
                 onChange={(e) => set("area", e.target.value)}
                 placeholder="25" min="5" className={inputCls} />
             </Field>
